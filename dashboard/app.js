@@ -5,9 +5,71 @@
 
 const API = window.location.origin + '/api';
 const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
-let onlineMode = true;
+let onlineMode = navigator.onLine; // auto-detect internet on load
+let isInternetAvailable = navigator.onLine;
 let history = [];
 let weatherData = null;  // cached for chart + hero
+
+// ── INTERNET CONNECTIVITY DETECTION ──────────────────────
+function showToast(msg, type = 'info') {
+    const t = document.createElement('div');
+    t.className = 'krishi-toast ' + type;
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;top:20px;right:20px;z-index:10000;
+        padding:12px 20px;border-radius:12px;font-size:0.85rem;font-weight:600;
+        box-shadow:0 8px 24px rgba(0,0,0,0.15);transition:all 0.4s ease;
+        opacity:0;transform:translateY(-10px);`;
+    if (type === 'offline') {
+        t.style.background = '#fef2f2'; t.style.color = '#dc2626'; t.style.border = '1px solid #fca5a5';
+    } else if (type === 'online') {
+        t.style.background = '#f0fdf4'; t.style.color = '#16a34a'; t.style.border = '1px solid #86efac';
+    }
+    document.body.appendChild(t);
+    requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3500);
+}
+
+window.addEventListener('offline', () => {
+    isInternetAvailable = false;
+    if (onlineMode) {
+        onlineMode = false;
+        updateModeUI();
+    }
+    const lang = document.getElementById('langSelect')?.value || 'en';
+    const msg = lang === 'hi' ? '📴 इंटरनेट कनेक्शन खो गया — ऑफलाइन मोड' :
+        lang === 'te' ? '📴 ఇంటర్నెట్ కనెక్షన్ పోయింది — ఆఫ్‌లైన్ మోడ్' :
+            '📴 Internet disconnected — Switched to Offline mode';
+    showToast(msg, 'offline');
+});
+
+window.addEventListener('online', () => {
+    isInternetAvailable = true;
+    onlineMode = true;
+    updateModeUI();
+    const lang = document.getElementById('langSelect')?.value || 'en';
+    const msg = lang === 'hi' ? '🌐 इंटरनेट वापस आ गया — ऑनलाइन मोड' :
+        lang === 'te' ? '🌐 ఇంటర్నెట్ తిరిగి వచ్చింది — ఆన్‌లైన్ మోడ్' :
+            '🌐 Internet restored — Back Online!';
+    showToast(msg, 'online');
+    // Reload weather and market data
+    loadWeather();
+    loadMarketTicker();
+});
+
+function updateModeUI() {
+    const btn = document.getElementById('modeBtn');
+    const text = document.getElementById('modeText');
+    if (!btn || !text) return;
+    btn.className = 'mode-btn ' + (onlineMode ? 'online' : 'offline');
+    const lang = document.getElementById('langSelect')?.value || 'en';
+    const labels = {
+        en: ['Online', 'Offline'],
+        hi: ['ऑनलाइन', 'ऑफलाइन'],
+        te: ['ఆన్‌లైన్', 'ఆఫ్‌లైన్']
+    };
+    const [on, off] = labels[lang] || labels.en;
+    text.textContent = onlineMode ? on : off;
+}
 
 // Weather code → emoji + description
 const WMO = {
@@ -18,6 +80,191 @@ const WMO = {
     81: '🌧️ Heavy Showers', 82: '⛈️ Violent Showers', 95: '⛈️ Thunderstorm',
     96: '⛈️ Hail Storm', 99: '⛈️ Heavy Hail'
 };
+
+// ── i18n TRANSLATIONS ────────────────────────────────────
+const TRANSLATIONS = {
+    en: {
+        // Sidebar nav
+        nav_dashboard: 'Dashboard',
+        nav_ask_ai: 'Ask AI',
+        nav_online: 'Online',
+        nav_weather: 'Weather',
+        nav_market: 'Market Prices',
+        nav_crops: 'Crop Guide',
+        nav_pests: 'Pest Solutions',
+        // Header
+        search_placeholder: 'Ask anything about farming...',
+        select_location: 'Select Location',
+        btn_ask: 'Ask',
+        // Hero
+        hero_greeting: 'Good Evening',
+        hero_welcome: 'Welcome back, Farmer! 👋',
+        hero_sub: 'Your smart farming assistant is ready',
+        // Bento cards
+        wheat_price: 'Wheat Price',
+        weather: 'Weather',
+        soil_health: 'Soil Health',
+        moisture: 'Moisture',
+        ai_daily_tip: 'AI Daily Tip',
+        powered_by: 'Powered by KrishiMind AI',
+        ask_more: 'Ask more →',
+        seven_day_temp: '📈 7-Day Temperature',
+        market_prices_top: '💰 Market Prices — Top Crops',
+        view_all: 'View all →',
+        // Quick actions
+        quick_actions: '⚡ Quick Actions',
+        qa_crop: 'Crop Advice',
+        qa_crop_sub: 'AI recommendation',
+        qa_pest: 'Pest Check',
+        qa_pest_sub: 'Identify & treat',
+        qa_weather: 'Weather',
+        qa_weather_sub: '7-day forecast',
+        qa_market: 'Market',
+        qa_market_sub: 'Live mandi rates',
+        // Sections
+        popular_questions: '🔥 Popular Questions',
+        activity_feed: '📝 Activity Feed',
+        recent_history: '🕐 Recent History',
+        // Chat page
+        chat_welcome: 'Welcome to KrishiMind AI',
+        chat_welcome_sub: 'Ask any farming question — crop advice, pest control, weather, market prices',
+        chat_placeholder: 'Type your farming question...',
+        // Weather page
+        weather_title: '🌤️ Weather Forecast',
+        weather_sub: 'Real-time weather data for your region',
+        seven_day_forecast: '📅 7-Day Forecast',
+        // Market page
+        market_title: '💰 Market Prices',
+        market_sub: 'Live mandi rates from across India',
+        // Crop page
+        crop_title: '🌱 Crop Guide',
+        crop_sub: 'Complete growing guide for major Indian crops',
+        // Pest page
+        pest_title: '🐛 Pest Solutions',
+        pest_sub: 'Identify and treat common crop pests and diseases',
+        // Location modal
+        loc_title: '📍 Select Your Location',
+        loc_sub: 'Choose your nearest city for accurate weather, market prices, and AI advice',
+    },
+    hi: {
+        nav_dashboard: 'डैशबोर्ड',
+        nav_ask_ai: 'AI से पूछें',
+        nav_online: 'ऑनलाइन',
+        nav_weather: 'मौसम',
+        nav_market: 'मंडी भाव',
+        nav_crops: 'फसल गाइड',
+        nav_pests: 'कीट समाधान',
+        search_placeholder: 'खेती के बारे में कुछ भी पूछें...',
+        select_location: 'स्थान चुनें',
+        btn_ask: 'पूछें',
+        hero_greeting: 'नमस्ते',
+        hero_welcome: 'स्वागत है, किसान भाई! 👋',
+        hero_sub: 'आपका स्मार्ट कृषि सहायक तैयार है',
+        wheat_price: 'गेहूं का भाव',
+        weather: 'मौसम',
+        soil_health: 'मिट्टी स्वास्थ्य',
+        moisture: 'नमी',
+        ai_daily_tip: 'AI दैनिक सुझाव',
+        powered_by: 'KrishiMind AI द्वारा संचालित',
+        ask_more: 'और पूछें →',
+        seven_day_temp: '📈 7-दिन का तापमान',
+        market_prices_top: '💰 मंडी भाव — प्रमुख फसलें',
+        view_all: 'सभी देखें →',
+        quick_actions: '⚡ त्वरित कार्य',
+        qa_crop: 'फसल सलाह',
+        qa_crop_sub: 'AI अनुशंसा',
+        qa_pest: 'कीट जाँच',
+        qa_pest_sub: 'पहचानें और उपचार करें',
+        qa_weather: 'मौसम',
+        qa_weather_sub: '7-दिन का पूर्वानुमान',
+        qa_market: 'मंडी',
+        qa_market_sub: 'लाइव मंडी भाव',
+        popular_questions: '🔥 लोकप्रिय प्रश्न',
+        activity_feed: '📝 गतिविधि फ़ीड',
+        recent_history: '🕐 हाल का इतिहास',
+        chat_welcome: 'KrishiMind AI में आपका स्वागत है',
+        chat_welcome_sub: 'कोई भी खेती का सवाल पूछें — फसल सलाह, कीट नियंत्रण, मौसम, मंडी भाव',
+        chat_placeholder: 'अपना खेती का सवाल लिखें...',
+        weather_title: '🌤️ मौसम पूर्वानुमान',
+        weather_sub: 'आपके क्षेत्र का रीयल-टाइम मौसम डेटा',
+        seven_day_forecast: '📅 7-दिन का पूर्वानुमान',
+        market_title: '💰 मंडी भाव',
+        market_sub: 'भारत भर की लाइव मंडी दरें',
+        crop_title: '🌱 फसल गाइड',
+        crop_sub: 'प्रमुख भारतीय फसलों की पूरी उगाई गाइड',
+        pest_title: '🐛 कीट समाधान',
+        pest_sub: 'सामान्य फसल कीट और रोगों की पहचान और उपचार',
+        loc_title: '📍 अपना स्थान चुनें',
+        loc_sub: 'सटीक मौसम, मंडी भाव और AI सलाह के लिए अपना निकटतम शहर चुनें',
+    },
+    te: {
+        nav_dashboard: 'డ్యాష్‌బోర్డ్',
+        nav_ask_ai: 'AI ని అడగండి',
+        nav_online: 'ఆన్‌లైన్',
+        nav_weather: 'వాతావరణం',
+        nav_market: 'మార్కెట్ ధరలు',
+        nav_crops: 'పంట గైడ్',
+        nav_pests: 'పురుగుల పరిష్కారాలు',
+        search_placeholder: 'వ్యవసాయం గురించి ఏదైనా అడగండి...',
+        select_location: 'ప్రదేశాన్ని ఎంచుకోండి',
+        btn_ask: 'అడగండి',
+        hero_greeting: 'నమస్కారం',
+        hero_welcome: 'తిరిగి స్వాగతం, రైతు! 👋',
+        hero_sub: 'మీ స్మార్ట్ వ్యవసాయ సహాయకుడు సిద్ధంగా ఉన్నాడు',
+        wheat_price: 'గోధుమ ధర',
+        weather: 'వాతావరణం',
+        soil_health: 'నేల ఆరోగ్యం',
+        moisture: 'తేమ',
+        ai_daily_tip: 'AI రోజువారీ చిట్కా',
+        powered_by: 'KrishiMind AI ద్వారా నడుస్తుంది',
+        ask_more: 'మరింత అడగండి →',
+        seven_day_temp: '📈 7-రోజుల ఉష్ణోగ్రత',
+        market_prices_top: '💰 మార్కెట్ ధరలు — ప్రధాన పంటలు',
+        view_all: 'అన్నీ చూడండి →',
+        quick_actions: '⚡ త్వరిత చర్యలు',
+        qa_crop: 'పంట సలహా',
+        qa_crop_sub: 'AI సిఫార్సు',
+        qa_pest: 'పురుగుల తనిఖీ',
+        qa_pest_sub: 'గుర్తించి చికిత్స చేయండి',
+        qa_weather: 'వాతావరణం',
+        qa_weather_sub: '7-రోజుల అంచనా',
+        qa_market: 'మార్కెట్',
+        qa_market_sub: 'లైవ్ మార్కెట్ ధరలు',
+        popular_questions: '🔥 జనాదరణ పొందిన ప్రశ్నలు',
+        activity_feed: '📝 కార్యకలాపాల ఫీడ్',
+        recent_history: '🕐 ఇటీవలి చరిత్ర',
+        chat_welcome: 'KrishiMind AI కి స్వాగతం',
+        chat_welcome_sub: 'ఏదైనా వ్యవసాయ ప్రశ్న అడగండి — పంట సలహా, పురుగుల నియంత్రణ, వాతావరణం, మార్కెట్ ధరలు',
+        chat_placeholder: 'మీ వ్యవసాయ ప్రశ్నను టైప్ చేయండి...',
+        weather_title: '🌤️ వాతావరణ అంచనా',
+        weather_sub: 'మీ ప్రాంతానికి రియల్-టైమ్ వాతావరణ డేటా',
+        seven_day_forecast: '📅 7-రోజుల అంచనా',
+        market_title: '💰 మార్కెట్ ధరలు',
+        market_sub: 'భారతదేశం అంతటా లైవ్ మండి ధరలు',
+        crop_title: '🌱 పంట గైడ్',
+        crop_sub: 'ప్రధాన భారతీయ పంటల పూర్తి పెంపకం గైడ్',
+        pest_title: '🐛 పురుగుల పరిష్కారాలు',
+        pest_sub: 'సాధారణ పంట తెగుళ్ళు మరియు వ్యాధులను గుర్తించి చికిత్స చేయండి',
+        loc_title: '📍 మీ ప్రదేశాన్ని ఎంచుకోండి',
+        loc_sub: 'ఖచ్చితమైన వాతావరణం, మార్కెట్ ధరలు మరియు AI సలహా కోసం మీ సమీప నగరాన్ని ఎంచుకోండి',
+    }
+};
+
+function applyLanguage(lang) {
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    // Update all elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+    // Update placeholders
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if (dict[key]) el.placeholder = dict[key];
+    });
+    // Set HTML lang attribute
+    document.documentElement.lang = lang;
+}
 function wmoIcon(code) { return (WMO[code] || '🌤️ Unknown').split(' ')[0]; }
 function wmoDesc(code) { return (WMO[code] || 'Unknown').split(' ').slice(1).join(' '); }
 
@@ -223,11 +470,16 @@ async function logout() {
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
 
-    // Language
+    // Language — restore saved preference and apply
     const ls = document.getElementById('langSelect');
     if (ls) {
-        ls.value = localStorage.getItem('krishi_lang') || 'en';
-        ls.addEventListener('change', (e) => localStorage.setItem('krishi_lang', e.target.value));
+        const savedLang = localStorage.getItem('krishi_lang') || 'en';
+        ls.value = savedLang;
+        applyLanguage(savedLang);
+        ls.addEventListener('change', (e) => {
+            localStorage.setItem('krishi_lang', e.target.value);
+            applyLanguage(e.target.value);
+        });
     }
 
     if (!userLocation) {
@@ -296,19 +548,34 @@ function toggleSidebar() { document.getElementById('sidebar').classList.toggle('
 
 // ── ONLINE/OFFLINE ──────────────────────────────────────
 function toggleOnline() {
+    // If no internet, prevent switching to online
+    if (!isInternetAvailable && !onlineMode) {
+        const lang = document.getElementById('langSelect')?.value || 'en';
+        const msg = lang === 'hi' ? '📴 इंटरनेट नहीं है — ऑनलाइन मोड उपलब्ध नहीं' :
+            lang === 'te' ? '📴 ఇంటర్నెట్ లేదు — ఆన్‌లైన్ మోడ్ అందుబాటులో లేదు' :
+                '📴 No internet — Online mode unavailable';
+        showToast(msg, 'offline');
+        return;
+    }
     onlineMode = !onlineMode;
-    const btn = document.getElementById('modeBtn');
-    const text = document.getElementById('modeText');
-    btn.className = 'mode-btn ' + (onlineMode ? 'online' : 'offline');
-    text.textContent = onlineMode ? 'Online' : 'Offline';
+    updateModeUI();
 }
 
 async function checkHealth() {
     try {
         const r = await fetch(API + '/health');
         const d = await r.json();
-        if (!d.ai_ready) { onlineMode = false; toggleOnline(); }
-    } catch { onlineMode = false; }
+        if (!d.ai_ready && isInternetAvailable) {
+            // AI not ready but internet available — still keep online for weather etc.
+        } else if (!d.ai_ready) {
+            onlineMode = false;
+            updateModeUI();
+        }
+    } catch {
+        // Cannot reach localhost API
+        onlineMode = false;
+        updateModeUI();
+    }
 }
 
 // ── WEATHER (Real-time Open-Meteo) ──────────────────────
@@ -404,8 +671,22 @@ async function loadWeather() {
         drawTemperatureChart(d.daily);
 
     } catch (err) {
+        const lang = document.getElementById('langSelect')?.value || 'en';
+        const noInternetMsg = lang === 'hi' ? '📴 इंटरनेट उपलब्ध नहीं — मौसम डेटा लोड नहीं हो सकता' :
+            lang === 'te' ? '📴 ఇంటర్నెట్ అందుబాటులో లేదు — వాతావరణ డేటా లోడ్ చేయడం సాధ్యం కాదు' :
+                '📴 No internet connection — Weather data unavailable';
+        const retryLabel = lang === 'hi' ? 'पुनः प्रयास करें' : lang === 'te' ? 'మళ్ళీ ప్రయత్నించండి' : 'Retry';
         document.getElementById('weatherCurrent').innerHTML =
-            '<p style="color:#ef4444;padding:1rem">❌ Failed to load weather data.</p>';
+            `<div style="text-align:center;padding:2rem;color:#6b7280">
+                <p style="font-size:2rem;margin-bottom:8px">📴</p>
+                <p style="font-weight:600;margin-bottom:4px">${noInternetMsg}</p>
+                <p style="font-size:0.75rem;margin-bottom:12px">Weather requires internet • FAISS search works offline</p>
+                <button onclick="loadWeather()" style="padding:6px 16px;border-radius:8px;background:#059669;color:white;border:none;cursor:pointer;font-size:0.8rem">${retryLabel}</button>
+            </div>`;
+        document.getElementById('dashTemp').textContent = '--°C';
+        document.getElementById('dashWeatherDesc').textContent = 'Offline';
+        document.getElementById('forecastGrid').innerHTML =
+            '<p style="color:#6b7280;text-align:center;padding:1rem;grid-column:1/-1">📴 Weather forecast needs internet connection</p>';
     }
 }
 
@@ -589,8 +870,10 @@ async function loadMarketTicker() {
             if (wheat.history) drawWheatSparkline(wheat.history);
         }
     } catch {
+        // Market API runs on localhost, so should always work
+        // If it fails, server might not be running
         document.getElementById('tickerScroll').innerHTML =
-            '<p style="color:#ef4444;font-size:0.8rem;padding:0.5rem">❌ Failed to load prices</p>';
+            '<p style="color:#6b7280;font-size:0.8rem;padding:0.5rem">📴 Market data unavailable — API server may be offline</p>';
     }
 }
 
@@ -638,11 +921,39 @@ function loadCropCalendar() {
 // ── AI DAILY TIP ────────────────────────────────────────
 async function loadAIDailyTip() {
     const body = document.getElementById('aiTipBody');
+    const month = new Date().getMonth() + 1;
+    const season = (month >= 10 || month <= 3) ? 'Rabi' : (month >= 6 && month <= 9) ? 'Kharif' : 'Zaid';
+    const lang = document.getElementById('langSelect')?.value || 'en';
+
+    // Offline seasonal tips (no API needed)
+    const offlineTips = {
+        Rabi: {
+            en: 'Apply balanced NPK fertilizer during vegetative growth. Monitor soil moisture weekly and irrigate when below 30%. Watch for aphids in mustard and rust in wheat crops.',
+            hi: 'वानस्पतिक वृद्धि के दौरान संतुलित NPK उर्वरक डालें। साप्ताहिक मिट्टी की नमी जाँचें और 30% से नीचे होने पर सिंचाई करें। सरसों में एफिड और गेहूं में रतुआ रोग पर नज़र रखें।',
+            te: 'మొక్కల పెరుగుదల సమయంలో సమతుల్య NPK ఎరువు వేయండి. వారానికొకసారి నేల తేమ పరీక్షించి 30% కంటే తక్కువగా ఉంటే నీరు పెట్టండి. ఆవాలో అఫిడ్స్ మరియు గోధుమలో తుప్పు వ్యాధిని గమనించండి.'
+        },
+        Kharif: {
+            en: 'Ensure proper drainage in rice paddies during heavy monsoon. Apply neem-based pesticide for organic pest control. Monitor cotton crop for bollworm at flowering stage.',
+            hi: 'भारी मानसून के दौरान धान के खेतों में उचित जल निकासी सुनिश्चित करें। जैविक कीट नियंत्रण के लिए नीम आधारित कीटनाशक लगाएं। फूल आने पर कपास में बॉलवर्म की निगरानी करें।',
+            te: 'భారీ వర్షాల సమయంలో వరి పొలాల్లో సరైన నీటి తీసుకుపోవడం నిర్ధారించండి. సేంద్రియ పురుగుల నియంత్రణ కోసం వేప ఆధారిత పురుగుమందు వాడండి. పత్తిలో పువ్వుల దశలో బోల్‌వార్మ్ గమనించండి.'
+        },
+        Zaid: {
+            en: 'Increase irrigation frequency for watermelon and cucumber in summer heat. Use mulching to retain soil moisture. Plant moong and sunflower early for best yield.',
+            hi: 'गर्मी में तरबूज और खीरे के लिए सिंचाई बढ़ाएं। मिट्टी की नमी बनाए रखने के लिए मल्चिंग करें। बेहतर उपज के लिए मूंग और सूरजमुखी जल्दी बोएं।',
+            te: 'వేసవిలో పుచ్చకాయ మరియు దోసకు నీటి తడులు పెంచండి. నేల తేమ నిలుపుకోవడానికి మల్చింగ్ వాడండి. మంచి దిగుబడి కోసం పెసలు మరియు పొద్దుతిరుగుడు ముందుగా విత్తండి.'
+        }
+    };
+
+    // If truly offline (no internet), show a pre-loaded tip
+    if (!isInternetAvailable) {
+        const tip = offlineTips[season]?.[lang] || offlineTips[season]?.en;
+        body.innerHTML = `<p>${tip}</p><p style="font-size:0.65rem;color:#9ca3af;margin-top:6px">📴 Offline tip • ${season} season</p>`;
+        return;
+    }
+
     try {
-        const month = new Date().getMonth() + 1;
-        const season = (month >= 10 || month <= 3) ? 'Rabi' : (month >= 6 && month <= 9) ? 'Kharif' : 'Zaid';
-        const monthName = new Date().toLocaleString('en-IN', { month: 'long' });
         const location = getLocationName();
+        const monthName = new Date().toLocaleString('en-IN', { month: 'long' });
         const q = `Give a short practical farming tip for ${season} season in ${monthName} for farmers near ${location}, India. Keep it under 3 sentences.`;
 
         const r = await fetch(API + '/query', {
@@ -651,13 +962,12 @@ async function loadAIDailyTip() {
             body: JSON.stringify({ query: q, online_mode: onlineMode, top_k: 3, location })
         });
         const d = await r.json();
-        const tip = d.online_answer || d.offline_answer || 'Apply balanced fertilizer during the vegetative stage. Monitor soil moisture weekly. Watch for aphids in mustard crops.';
+        const tip = d.online_answer || d.offline_answer || offlineTips[season]?.en;
         body.innerHTML = `<p>${tip.substring(0, 300)}</p>`;
-
-        // Add to activity feed
         addFeedItem('AI daily tip generated', 'dot-blue');
     } catch {
-        body.innerHTML = '<p>Apply balanced NPK fertilizer during the active growth stage. Monitor soil moisture levels and irrigate when drying below 30%. Stay vigilant for pest activity in this season.</p>';
+        const tip = offlineTips[season]?.[lang] || offlineTips[season]?.en;
+        body.innerHTML = `<p>${tip}</p>`;
     }
 }
 
@@ -847,15 +1157,59 @@ async function processQuery(query) {
 
         if (d.error) { addBubble('ai', '❌ ' + d.error); return; }
 
-        let answer = d.online_answer || d.offline_answer || 'No relevant results found. Try rephrasing your question.';
-        let meta = '';
         const serverTime = d.timestamp || getFullTimestamp();
         const serverLoc = d.location || location;
+        const isOffline = d.mode === 'offline';
+        let answer = '';
+        let meta = '';
 
+        if (!isOffline && d.online_answer) {
+            // ── ONLINE MODE: AI-generated answer ──
+            answer = d.online_answer;
+        } else {
+            // ── OFFLINE MODE: Show formatted FAISS knowledge base results ──
+            if (d.results && d.results.length > 0) {
+                const lang = langSelect ? langSelect.value : 'en';
+                const offlineTitle = lang === 'hi' ? '📚 किसान कॉल सेंटर ज्ञानकोश से उत्तर' :
+                    lang === 'te' ? '📚 కిసాన్ కాల్ సెంటర్ డేటాబేస్ నుండి సమాధానాలు' :
+                        '📚 Answers from Kisan Call Centre Knowledge Base';
+                const confHigh = lang === 'hi' ? 'उच्च मिलान' : lang === 'te' ? 'అధిక సరిపోలిక' : 'High Match';
+                const confMed = lang === 'hi' ? 'मध्यम मिलान' : lang === 'te' ? 'మధ్యస్థ సరిపోలిక' : 'Partial Match';
+                const confLow = lang === 'hi' ? 'कम मिलान' : lang === 'te' ? 'తక్కువ సరిపోలిక' : 'Low Match';
+
+                let cards = `<p style="font-weight:600;margin-bottom:10px;color:#059669">${offlineTitle}</p>`;
+                const seen = new Set();
+                d.results.forEach((r, i) => {
+                    if (seen.has(r.answer)) return;
+                    seen.add(r.answer);
+                    const conf = r.confidence;
+                    let badge = conf >= 70 ? `🟢 ${confHigh} (${conf}%)` :
+                        conf >= 40 ? `🟡 ${confMed} (${conf}%)` :
+                            `🟠 ${confLow} (${conf}%)`;
+                    const cropTag = r.crop ? `<span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:20px;font-size:0.7rem;margin-left:6px">🌱 ${r.crop}</span>` : '';
+                    const stateTag = r.state ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:0.7rem;margin-left:4px">📍 ${r.state}</span>` : '';
+
+                    cards += `<div style="background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.15);border-radius:12px;padding:12px 14px;margin-bottom:8px">
+                        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+                            <span style="font-size:0.75rem;font-weight:600;color:#6b7280">${badge}</span>${cropTag}${stateTag}
+                        </div>
+                        <p style="font-size:0.85rem;color:#374151;line-height:1.5">${escapeHtml(r.answer)}</p>
+                    </div>`;
+                });
+                answer = cards;
+            } else {
+                answer = d.offline_answer || 'No relevant results found. Try rephrasing your question.';
+                answer = formatMarkdown(answer);
+            }
+        }
+
+        // Build meta bar
+        const modeLabel = isOffline ? '📴 Offline (FAISS)' : '🌐 Online (AI)';
         if (d.results && d.results.length > 0) {
             const top = d.results[0];
             const crops = [...new Set(d.results.map(r => r.crop).filter(Boolean))];
             meta = `<div class="bubble-meta">
+                <span class="meta-tag conf">${modeLabel}</span>
                 <span class="meta-tag conf">✅ ${top.confidence}% match</span>
                 ${crops.length ? `<span class="meta-tag info">🌱 ${crops.join(', ')}</span>` : ''}
                 <span class="meta-tag info">📍 ${serverLoc}</span>
@@ -864,12 +1218,19 @@ async function processQuery(query) {
             </div>`;
         } else {
             meta = `<div class="bubble-meta">
+                <span class="meta-tag conf">${modeLabel}</span>
                 <span class="meta-tag info">📍 ${serverLoc}</span>
                 <span class="meta-tag info">📅 ${serverTime}</span>
                 <span class="meta-tag info">⏱️ ${d.elapsed}s</span>
             </div>`;
         }
-        addBubble('ai', formatMarkdown(answer) + meta);
+
+        // For online mode, format markdown; offline already formatted above
+        if (!isOffline && d.online_answer) {
+            addBubble('ai', formatMarkdown(answer) + meta);
+        } else {
+            addBubble('ai', answer + meta);
+        }
 
         history.unshift({ query, time: new Date() });
         updateHistory();

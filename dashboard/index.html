@@ -23,18 +23,19 @@
         </div>
         <nav class="nav">
             <a href="#" class="nav-item active" data-page="dashboard" onclick="navigate('dashboard',this)">
-                <span>📊</span> Dashboard</a>
+                <span>📊</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
             <a href="#" class="nav-item" data-page="chat" onclick="navigate('chat',this)">
-                <span>🤖</span> Ask AI
-                <span class="nav-badge"><span class="pulse-dot"></span> Online</span></a>
+                <span>🤖</span> <span data-i18n="nav_ask_ai">Ask AI</span>
+                <span class="nav-badge"><span class="pulse-dot"></span> <span
+                        data-i18n="nav_online">Online</span></span></a>
             <a href="#" class="nav-item" data-page="weather" onclick="navigate('weather',this)">
-                <span>🌤️</span> Weather</a>
+                <span>🌤️</span> <span data-i18n="nav_weather">Weather</span></a>
             <a href="#" class="nav-item" data-page="market" onclick="navigate('market',this)">
-                <span>💰</span> Market Prices</a>
+                <span>💰</span> <span data-i18n="nav_market">Market Prices</span></a>
             <a href="#" class="nav-item" data-page="crops" onclick="navigate('crops',this)">
-                <span>🌱</span> Crop Guide</a>
+                <span>🌱</span> <span data-i18n="nav_crops">Crop Guide</span></a>
             <a href="#" class="nav-item" data-page="pests" onclick="navigate('pests',this)">
-                <span>🐛</span> Pest Solutions</a>
+                <span>🐛</span> <span data-i18n="nav_pests">Pest Solutions</span></a>
         </nav>
         <div class="sidebar-bottom">
             <div class="lang-select">
@@ -67,16 +68,17 @@
             <button class="menu-btn" onclick="toggleSidebar()">☰</button>
             <div class="search-wrap">
                 <span class="search-icon">🔍</span>
-                <input id="globalSearch" type="text" placeholder="Ask anything about farming..."
+                <input id="globalSearch" type="text" data-i18n-ph="search_placeholder"
+                    placeholder="Ask anything about farming..."
                     onkeydown="if(event.key==='Enter'){navigate('chat');askFromGlobal(this.value);this.value=''}">
             </div>
             <button onclick="showLocationPicker()" id="locationBadge" class="location-badge" title="Change location">
-                📍 <span id="locationBadgeText">Select Location</span>
+                📍 <span id="locationBadgeText" data-i18n="select_location">Select Location</span>
             </button>
             <button onclick="askFromGlobal(document.getElementById('globalSearch').value)" class="ask-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg> Ask
+                </svg> <span data-i18n="btn_ask">Ask</span>
             </button>
             <button onclick="toggleOnline()" id="modeBtn" class="mode-btn online">
                 <span id="modeDot" class="mode-dot"></span>
@@ -92,9 +94,9 @@
                     <!-- ROW 1: Hero Banner -->
                     <div class="hero-banner" id="heroBanner">
                         <div class="hero-content">
-                            <p class="hero-greeting" id="heroGreeting">Good Evening</p>
-                            <h2 class="hero-title">Welcome back, Farmer! 👋</h2>
-                            <p class="hero-sub" id="heroSub">Loading farm overview...</p>
+                            <p class="hero-greeting" id="heroGreeting" data-i18n="hero_greeting">Good Evening</p>
+                            <h2 class="hero-title" data-i18n="hero_welcome">Welcome back, Farmer! 👋</h2>
+                            <p class="hero-sub" id="heroSub" data-i18n="hero_sub">Loading farm overview...</p>
                         </div>
                         <div class="hero-right">
                             <div class="hero-date" id="heroDate"></div>
@@ -110,8 +112,8 @@
                     <div class="bento-grid">
                         <!-- Wheat Price (with sparkline) -->
                         <div class="bento-card bento-wheat" onclick="navigate('market')" style="--delay:0">
-                            <div class="stat-top"><span class="stat-label">Wheat Price</span><span
-                                    class="stat-icon bg-amber">🌾</span></div>
+                            <div class="stat-top"><span class="stat-label" data-i18n="wheat_price">Wheat
+                                    Price</span><span class="stat-icon bg-amber">🌾</span></div>
                             <p class="stat-val" id="dashWheatPrice">₹2,450<span class="stat-unit">/qt</span></p>
                             <p class="stat-delta up" id="dashWheatDelta">↑ 3.2%</p>
                             <canvas id="wheatSparkline" class="sparkline-canvas" width="160" height="36"></canvas>
@@ -119,7 +121,7 @@
 
                         <!-- Weather (with mini forecast) -->
                         <div class="bento-card bento-weather" onclick="navigate('weather')" style="--delay:1">
-                            <div class="stat-top"><span class="stat-label">Weather</span><span
+                            <div class="stat-top"><span class="stat-label" data-i18n="weather">Weather</span><span
                                     class="stat-icon bg-blue">🌤️</span></div>
                             <p class="stat-val" id="dashTemp">--°C</p>
                             <p class="stat-delta" id="dashWeatherDesc">Loading...</p>
@@ -128,8 +130,8 @@
 
                         <!-- Soil Health (merged gauge) -->
                         <div class="bento-card bento-soil" style="--delay:2">
-                            <div class="stat-top"><span class="stat-label">Soil Health</span><span
-                                    class="stat-icon bg-green">🧪</span></div>
+                            <div class="stat-top"><span class="stat-label" data-i18n="soil_health">Soil
+                                    Health</span><span class="stat-icon bg-green">🧪</span></div>
                             <div class="gauge-wrap">
                                 <svg class="gauge-ring" viewBox="0 0 80 80">
                                     <circle cx="40" cy="40" r="34" fill="none" stroke="#e5e7eb" stroke-width="6" />
@@ -140,7 +142,7 @@
                                 </svg>
                                 <div class="gauge-center">
                                     <span class="gauge-val" id="dashSoilVal">--</span>
-                                    <span class="gauge-label">Moisture</span>
+                                    <span class="gauge-label" data-i18n="moisture">Moisture</span>
                                 </div>
                             </div>
                             <p class="stat-delta" id="dashSoilStatus">Loading...</p>
@@ -152,8 +154,8 @@
                             <div class="aitip-header">
                                 <span class="aitip-icon">🤖</span>
                                 <div>
-                                    <p class="aitip-title">AI Daily Tip</p>
-                                    <p class="aitip-sub">Powered by KrishiMind AI</p>
+                                    <p class="aitip-title" data-i18n="ai_daily_tip">AI Daily Tip</p>
+                                    <p class="aitip-sub" data-i18n="powered_by">Powered by KrishiMind AI</p>
                                 </div>
                             </div>
                             <div class="aitip-body" id="aiTipBody">
@@ -165,20 +167,23 @@
                             </div>
                             <button class="aitip-ask"
                                 onclick="navigate('chat');setTimeout(()=>askQuestion('Give me a farming tip for today based on current weather and season'),300)">
-                                Ask more →
+                                <span data-i18n="ask_more">Ask more →</span>
                             </button>
                         </div>
 
                         <!-- 7-Day Temperature Chart -->
                         <div class="bento-card bento-chart" style="--delay:4">
-                            <div class="stat-top"><span class="stat-label">📈 7-Day Temperature</span></div>
+                            <div class="stat-top"><span class="stat-label" data-i18n="seven_day_temp">📈 7-Day
+                                    Temperature</span></div>
                             <canvas id="tempChart" class="temp-chart-canvas"></canvas>
                         </div>
 
                         <!-- Market Ticker -->
                         <div class="bento-card bento-ticker" style="--delay:5">
-                            <div class="stat-top"><span class="stat-label">💰 Market Prices — Top Crops</span>
-                                <a href="#" onclick="event.preventDefault();navigate('market')" class="ticker-link">View
+                            <div class="stat-top"><span class="stat-label" data-i18n="market_prices_top">💰 Market
+                                    Prices — Top Crops</span>
+                                <a href="#" onclick="event.preventDefault();navigate('market')" class="ticker-link"
+                                    data-i18n="view_all">View
                                     all →</a>
                             </div>
                             <div class="ticker-scroll" id="tickerScroll">
@@ -193,25 +198,29 @@
 
                         <!-- Quick Actions -->
                         <div class="bento-card bento-actions" style="--delay:6">
-                            <p class="bento-section-head">⚡ Quick Actions</p>
+                            <p class="bento-section-head" data-i18n="quick_actions">⚡ Quick Actions</p>
                             <div class="quick-grid">
                                 <button class="quick-card"
                                     onclick="navigate('chat');setTimeout(()=>askQuestion('What crops should I plant this season?'),300)">
                                     <span class="quick-icon">🌱</span>
-                                    <div><strong>Crop Advice</strong><small>AI recommendation</small></div>
+                                    <div><strong data-i18n="qa_crop">Crop Advice</strong><small
+                                            data-i18n="qa_crop_sub">AI recommendation</small></div>
                                 </button>
                                 <button class="quick-card"
                                     onclick="navigate('chat');setTimeout(()=>askQuestion('How to control pests in my farm?'),300)">
                                     <span class="quick-icon">🐛</span>
-                                    <div><strong>Pest Check</strong><small>Identify & treat</small></div>
+                                    <div><strong data-i18n="qa_pest">Pest Check</strong><small
+                                            data-i18n="qa_pest_sub">Identify & treat</small></div>
                                 </button>
                                 <button class="quick-card" onclick="navigate('weather')">
                                     <span class="quick-icon">🌧️</span>
-                                    <div><strong>Weather</strong><small>7-day forecast</small></div>
+                                    <div><strong data-i18n="qa_weather">Weather</strong><small
+                                            data-i18n="qa_weather_sub">7-day forecast</small></div>
                                 </button>
                                 <button class="quick-card" onclick="navigate('market')">
                                     <span class="quick-icon">📈</span>
-                                    <div><strong>Market</strong><small>Live mandi rates</small></div>
+                                    <div><strong data-i18n="qa_market">Market</strong><small
+                                            data-i18n="qa_market_sub">Live mandi rates</small></div>
                                 </button>
                             </div>
                         </div>
@@ -225,13 +234,13 @@
 
                         <!-- Popular Questions -->
                         <div class="bento-card bento-popular" style="--delay:8">
-                            <p class="bento-section-head">🔥 Popular Questions</p>
+                            <p class="bento-section-head" data-i18n="popular_questions">🔥 Popular Questions</p>
                             <div id="dashPopular" class="popular-grid"></div>
                         </div>
 
                         <!-- Activity Feed -->
                         <div class="bento-card bento-feed" style="--delay:9">
-                            <p class="bento-section-head">📝 Activity Feed</p>
+                            <p class="bento-section-head" data-i18n="activity_feed">📝 Activity Feed</p>
                             <div id="activityFeed" class="activity-feed">
                                 <div class="feed-item feed-system"><span class="feed-dot dot-green"></span>
                                     <div>
@@ -260,13 +269,14 @@
                     <div id="chatArea" class="chat-area">
                         <div class="chat-welcome">
                             <div class="cw-icon">🌾</div>
-                            <h2>Welcome to KrishiMind AI</h2>
-                            <p>Ask any farming question — crop advice, pest control, weather, market prices</p>
+                            <h2 data-i18n="chat_welcome">Welcome to KrishiMind AI</h2>
+                            <p data-i18n="chat_welcome_sub">Ask any farming question — crop advice, pest control,
+                                weather, market prices</p>
                         </div>
                     </div>
                     <div class="chat-input-bar">
-                        <input id="chatInput" type="text" placeholder="Type your farming question..."
-                            onkeydown="if(event.key==='Enter')sendChat()">
+                        <input id="chatInput" type="text" data-i18n-ph="chat_placeholder"
+                            placeholder="Type your farming question..." onkeydown="if(event.key==='Enter')sendChat()">
                         <button onclick="sendChat()" class="chat-send">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
@@ -277,10 +287,10 @@
                 </div>
                 <!-- Right Panel -->
                 <aside class="right-panel">
-                    <h3 class="rp-title">🔥 Popular Questions</h3>
+                    <h3 class="rp-title" data-i18n="popular_questions">🔥 Popular Questions</h3>
                     <div id="popularQuestions"></div>
                     <hr class="rp-hr">
-                    <h3 class="rp-title">🕐 Recent History</h3>
+                    <h3 class="rp-title" data-i18n="recent_history">🕐 Recent History</h3>
                     <div id="historyList">
                         <p class="rp-empty">No queries yet</p>
                     </div>
@@ -290,8 +300,8 @@
             <!-- PAGE: Weather -->
             <section id="page-weather" class="page">
                 <div class="page-pad">
-                    <h2 class="page-title">🌤️ Weather Forecast</h2>
-                    <p class="page-sub">Real-time weather data for your region</p>
+                    <h2 class="page-title" data-i18n="weather_title">🌤️ Weather Forecast</h2>
+                    <p class="page-sub" data-i18n="weather_sub">Real-time weather data for your region</p>
                     <div class="weather-location">\r\n <span>📍 Location:</span>\r\n <select id="weatherCity"
                             onchange="selectLocationFromDropdown(this)">
                             <option value="20.9320,77.7523">Amravati</option>
@@ -310,7 +320,7 @@
                     <div class="weather-current" id="weatherCurrent">
                         <div class="skeleton" style="height:180px;border-radius:20px"></div>
                     </div>
-                    <h3 class="section-title">📅 7-Day Forecast</h3>
+                    <h3 class="section-title" data-i18n="seven_day_forecast">📅 7-Day Forecast</h3>
                     <div class="forecast-grid" id="forecastGrid">
                         <div class="skeleton" style="height:120px;border-radius:16px"></div>
                         <div class="skeleton" style="height:120px;border-radius:16px"></div>
@@ -322,8 +332,8 @@
             <!-- PAGE: Market -->
             <section id="page-market" class="page">
                 <div class="page-pad">
-                    <h2 class="page-title">💰 Market Prices</h2>
-                    <p class="page-sub">Live mandi rates from across India</p>
+                    <h2 class="page-title" data-i18n="market_title">💰 Market Prices</h2>
+                    <p class="page-sub" data-i18n="market_sub">Live mandi rates from across India</p>
                     <div class="market-grid" id="marketGrid">
                         <div class="skeleton" style="height:100px;border-radius:16px"></div>
                         <div class="skeleton" style="height:100px;border-radius:16px"></div>
@@ -335,8 +345,8 @@
             <!-- PAGE: Crops -->
             <section id="page-crops" class="page">
                 <div class="page-pad">
-                    <h2 class="page-title">🌱 Crop Guide</h2>
-                    <p class="page-sub">Complete growing guide for major Indian crops</p>
+                    <h2 class="page-title" data-i18n="crop_title">🌱 Crop Guide</h2>
+                    <p class="page-sub" data-i18n="crop_sub">Complete growing guide for major Indian crops</p>
                     <div class="crops-grid" id="cropsGrid">
                         <div class="skeleton" style="height:200px;border-radius:16px"></div>
                         <div class="skeleton" style="height:200px;border-radius:16px"></div>
@@ -347,8 +357,8 @@
             <!-- PAGE: Pests -->
             <section id="page-pests" class="page">
                 <div class="page-pad">
-                    <h2 class="page-title">🐛 Pest Solutions</h2>
-                    <p class="page-sub">Identify and treat common crop pests and diseases</p>
+                    <h2 class="page-title" data-i18n="pest_title">🐛 Pest Solutions</h2>
+                    <p class="page-sub" data-i18n="pest_sub">Identify and treat common crop pests and diseases</p>
                     <div class="pests-grid" id="pestsGrid">
                         <div class="skeleton" style="height:200px;border-radius:16px"></div>
                         <div class="skeleton" style="height:200px;border-radius:16px"></div>
@@ -361,8 +371,9 @@
     <!-- LOCATION PICKER MODAL -->
     <div id="locationModal" class="loc-modal-overlay">
         <div class="loc-modal">
-            <h3 class="loc-modal-title">📍 Select Your Location</h3>
-            <p class="loc-modal-sub">Choose your nearest city for accurate weather, market prices, and AI advice</p>
+            <h3 class="loc-modal-title" data-i18n="loc_title">📍 Select Your Location</h3>
+            <p class="loc-modal-sub" data-i18n="loc_sub">Choose your nearest city for accurate weather, market prices,
+                and AI advice</p>
             <input type="text" id="locSearch" class="loc-search" placeholder="🔍 Search city..."
                 oninput="filterLocations(this.value)">
             <div class="loc-grid" id="locGrid">

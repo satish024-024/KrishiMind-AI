@@ -102,7 +102,7 @@ class QueryHandler:
         # Format as numbered list with confidence
         formatted_answers = []
         for i, (answer, badge, conf) in enumerate(answers, 1):
-            formatted_answers.append(f"{i}. {answer}")
+            formatted_answers.append(f"{badge} ({round(conf*100)}%)\n{i}. {answer}")
         
         return "\n\n".join(formatted_answers)
     
