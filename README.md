@@ -1,310 +1,533 @@
-# Kisan Call Centre Query Assistant
+# 🌾 KrishiMind AI — Smart Agriculture Assistant
 
-A production-ready AI-powered agricultural helpdesk system using IBM Watsonx Granite LLM and FAISS vector search to answer farmers' queries related to crop diseases, pest control, fertilizer usage, and government schemes.
+> **AI-powered agricultural advisor for Indian farmers.** Get instant answers about crop management, pest control, weather, market prices, and farming best practices — powered by Google Gemini AI + FAISS semantic search over 2,000+ verified KCC (Kisan Call Centre) Q&A pairs.
 
-## Overview
+![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)
+![Streamlit](https://img.shields.io/badge/Streamlit-UI-red?logo=streamlit)
+![Flask](https://img.shields.io/badge/Flask-API-black?logo=flask)
+![Gemini](https://img.shields.io/badge/Google_Gemini-AI-orange?logo=google)
+![FAISS](https://img.shields.io/badge/FAISS-Search-green)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-Dashboard-06B6D4?logo=tailwindcss)
 
-The Kisan Call Centre Query Assistant is an intelligent agricultural query resolution system designed for rural support and information dissemination. It leverages advanced AI capabilities to provide accurate, contextual answers to agricultural queries in both offline and online modes.
+---
 
-### Key Features
+## 📋 Table of Contents
 
-- **Dual Mode Operation**: Works in both offline (FAISS-only) and online (LLM-enhanced) modes
-- **Semantic Search**: Uses FAISS vector similarity search for accurate query matching
-- **AI-Enhanced Responses**: Integrates IBM Watsonx Granite LLM for natural language generation
-- **Multilingual Support**: Handles queries and answers in both English and Hindi
-- **Production-Ready**: Professional UI, error handling, and scalable architecture
+- [Overview](#-overview)
+- [Architecture](#-architecture)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Setup & Installation](#-setup--installation)
+- [Running the Application](#-running-the-application)
+- [API Reference](#-api-reference)
+- [How It Works](#-how-it-works)
+- [Dataset Information](#-dataset-information)
+- [Configuration](#-configuration)
+- [Branches](#-branches)
+- [Contributing](#-contributing)
+- [Team](#-team)
 
-## Technical Architecture
+---
 
-### Technology Stack
+## 🌟 Overview
 
-- **Backend**: Python 3.9+
-- **Vector Search**: FAISS (Facebook AI Similarity Search)
-- **Embeddings**: Sentence Transformers (all-MiniLM-L6-v2)
-- **LLM**: IBM Watsonx Granite (ibm/granite-3-8b-instruct)
-- **Frontend**: Streamlit
-- **Data Processing**: Pandas, NumPy
+**KrishiMind AI** is an intelligent agricultural assistant designed specifically for Indian farmers. It combines:
 
-### System Workflow
+1. **FAISS Semantic Search** — Searches through 2,000+ verified Q&A pairs from India's Kisan Call Centre (KCC) dataset to find the most relevant answers.
+2. **Google Gemini AI** — Enhances results with AI-generated explanations and handles general queries that aren't in the knowledge base.
+3. **Multi-language Support** — Supports English, Hindi (हिन्दी), Marathi (मराठी), Telugu (తెలుగు), Tamil (தமிழ்), Kannada (ಕನ್ನಡ), Bengali (বাংলা), and Gujarati (ગુજરાતી).
 
-1. **Data Preprocessing**: Clean and extract Q&A pairs from raw KCC dataset
-2. **Embedding Generation**: Convert Q&A pairs to vector embeddings
-3. **FAISS Indexing**: Create searchable vector index
-4. **Query Processing**: Embed user queries and perform similarity search
-5. **Response Generation**: Return offline answers and optionally generate LLM-enhanced responses
+### Problem Statement
 
-## Installation
+Indian farmers often lack access to timely, accurate agricultural information. KrishiMind AI solves this by providing:
+- Instant answers to farming questions
+- AI-powered crop and pest advice
+- Information derived from verified government (KCC) data
+- Access in regional languages
+
+---
+
+## 🏗 Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                        USER INTERFACES                        │
+│                                                                │
+│   ┌─────────────────┐        ┌──────────────────────────┐     │
+│   │  Streamlit UI    │        │  HTML/Tailwind Dashboard  │    │
+│   │  (app.py)        │        │  (dashboard/index.html)   │    │
+│   │  Port: 8501      │        │  Port: 5000/dashboard/    │    │
+│   └────────┬─────────┘        └────────────┬─────────────┘    │
+│            │                                │                  │
+│    Direct import                     REST API calls            │
+│            │                                │                  │
+│            ▼                                ▼                  │
+│   ┌─────────────────────────────────────────────────────┐     │
+│   │              BACKEND SERVICES (shared)               │     │
+│   │                                                       │     │
+│   │  ┌──────────────┐  ┌───────────────┐  ┌──────────┐  │     │
+│   │  │ FAISS Store   │  │ Query Handler │  │ Gemini   │  │     │
+│   │  │ (faiss_store) │  │ (query_handler│  │ Service  │  │     │
+│   │  │               │  │  .py)         │  │ (watsonx │  │     │
+│   │  │ Semantic      │  │               │  │ _service │  │     │
+│   │  │ Search        │  │ Orchestrates  │  │  .py)    │  │     │
+│   │  │ over 2000+    │  │ FAISS + AI    │  │          │  │     │
+│   │  │ QA pairs      │  │ responses     │  │ Google   │  │     │
+│   │  │               │  │               │  │ Gemini   │  │     │
+│   │  └──────┬────────┘  └───────────────┘  │ API      │  │     │
+│   │         │                               └──────────┘  │     │
+│   │         ▼                                             │     │
+│   │  ┌──────────────────────────────────────────────┐    │     │
+│   │  │           DATA LAYER                          │    │     │
+│   │  │                                                │    │     │
+│   │  │  embeddings/faiss_index.bin  → FAISS index     │    │     │
+│   │  │  embeddings/meta.pkl        → Metadata         │    │     │
+│   │  │  data/kcc_qa_pairs.json     → QA pairs source  │    │     │
+│   │  └──────────────────────────────────────────────┘    │     │
+│   └─────────────────────────────────────────────────────┘     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+1. **User asks a question** (e.g., "How to control aphids in mustard?")
+2. **FAISS Search**: The query is embedded using `all-MiniLM-L6-v2` sentence transformer and searched against the FAISS index
+3. **Relevance Filtering**: Results with L2 distance > 1.3 are discarded (irrelevant)
+4. **Confidence Scoring**: Each result gets a confidence score (0-100%)
+5. **AI Enhancement** (Online Mode): If enabled, Gemini AI generates a comprehensive response using the FAISS results as context
+6. **Fallback**: If no FAISS results match, Gemini provides a direct AI answer
+7. **Response Displayed**: Results shown with confidence badges, source info, and metadata
+
+---
+
+## ✨ Features
+
+### Core Features
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Semantic Search** | FAISS-powered search over 2,000+ KCC verified Q&A pairs |
+| 🤖 **AI Enhancement** | Google Gemini generates comprehensive answers using retrieved context |
+| 🌐 **Multi-language** | 8 Indian languages supported |
+| 📊 **Confidence Scoring** | Every answer shows relevance percentage |
+| 🔒 **Offline Mode** | Works without internet using local FAISS index |
+| 📱 **Responsive Design** | Works on desktop, tablet, and mobile |
+
+### Two User Interfaces
+| Interface | Technology | URL | Best For |
+|-----------|------------|-----|----------|
+| **Streamlit UI** | Python + Streamlit | `localhost:8501` | Quick deployment, data science |
+| **Dashboard** | HTML + Tailwind CSS + JS | `localhost:5000/dashboard/` | Modern web experience |
+
+### Dashboard Highlights
+- 🌿 Dark green sidebar with wheat pattern
+- 📊 Quick stat cards (Weather, Prices, Soil pH, Alerts)
+- 💬 Real-time chat with typing indicators
+- 🔥 Popular questions panel
+- 🕐 Query history
+- 🟢 Online/Offline AI toggle
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **AI Model** | Google Gemini (`gemini-2.0-flash-001`) | Natural language understanding & generation |
+| **Vector Search** | FAISS (Facebook AI Similarity Search) | Fast semantic search over embeddings |
+| **Embeddings** | `all-MiniLM-L6-v2` (Sentence Transformers) | Convert text to vector embeddings |
+| **Backend API** | Flask + Flask-CORS | REST API for the dashboard |
+| **Streamlit UI** | Streamlit 1.54+ | Alternative Python-based UI |
+| **Dashboard UI** | HTML + Tailwind CSS + Vanilla JS | Modern responsive dashboard |
+| **Dataset** | KCC (Kisan Call Centre) | Government-verified agricultural Q&A |
+| **Language** | Python 3.9+ | Core language |
+
+---
+
+## 📁 Project Structure
+
+```
+krishi-mitra-ai/
+│
+├── app.py                          # Streamlit UI (main interface)
+├── api_server.py                   # Flask API server (for dashboard)
+├── config.py                       # Configuration (API keys, paths, model settings)
+├── requirements.txt                # Python dependencies
+├── rebuild_index.py                # Script to rebuild FAISS index from CSV
+├── setup.py                        # Initial setup script
+├── quick_setup.py                  # Quick setup helper
+├── test_relevance.py               # Test FAISS relevance filtering
+│
+├── services/                       # Backend services (shared by both UIs)
+│   ├── __init__.py
+│   ├── watsonx_service.py          # AI service (uses Google Gemini internally)
+│   ├── faiss_store.py              # FAISS index loading and search
+│   ├── query_handler.py            # Orchestrates FAISS + AI responses
+│   ├── data_preprocessing.py       # Dataset processing utilities
+│   └── generate_embeddings.py      # Generate vector embeddings
+│
+├── dashboard/                      # New HTML Dashboard
+│   └── index.html                  # Premium Tailwind CSS dashboard
+│
+├── data/                           # Data files
+│   └── kcc_qa_pairs.json           # 2,000 Q&A pairs (extracted from KCC dataset)
+│
+├── embeddings/                     # Pre-built search index
+│   ├── faiss_index.bin             # FAISS vector index
+│   ├── kcc_embeddings.pkl          # Sentence embeddings
+│   └── meta.pkl                    # Metadata for search results
+│
+├── .streamlit/
+│   └── config.toml                 # Streamlit theme configuration
+│
+├── .env.example                    # Environment variable template
+├── .gitignore                      # Git ignore rules
+├── README.md                       # This file
+├── DATASET_SETUP.md                # Dataset download instructions
+├── IBM_WATSONX_SETUP.md            # Legacy IBM Watsonx setup guide
+└── SETUP_SUMMARY.md                # Setup summary
+```
+
+---
+
+## 🚀 Setup & Installation
 
 ### Prerequisites
+- **Python 3.9+** installed
+- **Git** installed
+- **Google Gemini API Key** (free at [aistudio.google.com](https://aistudio.google.com/apikey))
 
-- Python 3.9 or higher
-- IBM Cloud account with Watsonx enabled (for online mode)
-- Virtual environment (recommended)
-
-### Setup Instructions
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd krishi-mitra-ai
-   ```
-
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` and add your IBM Watsonx credentials:
-   ```
-   IBM_WATSONX_API_KEY=your_api_key_here
-   IBM_WATSONX_PROJECT_ID=your_project_id_here
-   IBM_WATSONX_URL=https://eu-de.ml.cloud.ibm.com
-   MODEL_NAME=ibm/granite-3-8b-instruct
-   ```
-
-5. **Place dataset**
-   
-   Add your `raw_kcc.csv` file to the `data/` directory
-
-6. **Run setup verification**
-   ```bash
-   python setup.py
-   ```
-
-## Data Preparation
-
-### Step 1: Data Preprocessing
-
-Clean the raw KCC dataset and extract Q&A pairs:
+### Step 1: Clone the Repository
 
 ```bash
-python services/data_preprocessing.py
+git clone https://github.com/satish024-024/KrishiMind-AI.git
+cd KrishiMind-AI
 ```
 
-This will create:
-- `data/clean_kcc.csv` - Cleaned dataset
-- `data/kcc_qa_pairs.json` - Extracted Q&A pairs
-
-### Step 2: Generate Embeddings
-
-Create vector embeddings for all Q&A pairs:
+### Step 2: Install Dependencies
 
 ```bash
-python services/generate_embeddings.py
+pip install -r requirements.txt
 ```
 
-This will create:
-- `embeddings/kcc_embeddings.pkl` - Vector embeddings with metadata
+**Key dependencies:**
+```
+streamlit>=1.30.0
+google-genai>=1.0.0
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.0
+flask>=3.0.0
+flask-cors>=4.0.0
+python-dotenv>=1.0.0
+pandas>=2.0.0
+numpy>=1.24.0
+```
 
-### Step 3: Build FAISS Index
-
-Create the FAISS search index:
+### Step 3: Configure Environment
 
 ```bash
-python services/faiss_store.py
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and add your Gemini API key
 ```
 
-This will create:
-- `embeddings/faiss_index.bin` - FAISS vector index
-- `embeddings/meta.pkl` - Metadata mapping
+**`.env` file contents:**
+```env
+# Google Gemini API Configuration
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL_NAME=gemini-2.0-flash-001
 
-## Running the Application
+# Application Mode
+OFFLINE_MODE=false
+```
 
-Start the Streamlit application:
+> **Get your API key free:** Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey), sign in with Google, and create an API key.
+
+### Step 4: Verify Setup
+
+```bash
+python -c "from services.faiss_store import FAISSSearcher; s = FAISSSearcher(); s.load(); print(f'FAISS loaded: {s.index.ntotal} vectors')"
+```
+
+Expected output: `FAISS loaded: 2000 vectors`
+
+---
+
+## ▶️ Running the Application
+
+### Option A: Streamlit UI (Traditional)
 
 ```bash
 streamlit run app.py
 ```
+Open: **http://localhost:8501**
 
-The application will be available at `http://localhost:8501`
+### Option B: Modern Dashboard (Recommended)
 
-## Usage
-
-### Offline Mode
-
-- Disable "Enable Online Mode" in the sidebar
-- Queries are answered using FAISS similarity search only
-- Works without internet connectivity or IBM Watsonx credentials
-
-### Online Mode
-
-- Enable "Enable Online Mode" in the sidebar
-- Queries are enhanced with IBM Watsonx Granite LLM
-- Provides contextual, natural language responses
-
-### Sample Queries
-
-1. How to control aphids in mustard?
-2. What is the treatment for leaf spot in tomato?
-3. Suggest pesticide for whitefly in cotton.
-4. How to prevent fruit borer in brinjal?
-5. What fertilizer is recommended during flowering in maize?
-6. How to protect paddy from blast disease?
-7. What is the solution for jassids in cotton?
-8. How to apply for PM Kisan Samman Nidhi scheme?
-9. What is the dosage of neem oil for aphids?
-10. How to treat blight in potato crops?
-
-## Project Structure
-
+```bash
+python api_server.py
 ```
-krishi-mitra-ai/
-├── app.py                          # Main Streamlit application
-├── config.py                       # Configuration management
-├── setup.py                        # Setup verification script
-├── requirements.txt                # Python dependencies
-├── .env.example                    # Environment variables template
-├── data/
-│   ├── raw_kcc.csv                # Raw KCC dataset
-│   ├── clean_kcc.csv              # Cleaned dataset
-│   └── kcc_qa_pairs.json          # Extracted Q&A pairs
-├── embeddings/
-│   ├── kcc_embeddings.pkl         # Vector embeddings
-│   ├── faiss_index.bin            # FAISS index
-│   └── meta.pkl                   # Metadata mapping
-└── services/
-    ├── data_preprocessing.py      # Data cleaning module
-    ├── generate_embeddings.py     # Embedding generation
-    ├── faiss_store.py             # FAISS indexing
-    ├── watsonx_service.py         # IBM Watsonx integration
-    └── query_handler.py           # Query processing pipeline
+Open: **http://localhost:5000/dashboard/**
+
+### Option C: Both simultaneously
+
+```bash
+# Terminal 1
+streamlit run app.py
+
+# Terminal 2
+python api_server.py
 ```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `IBM_WATSONX_API_KEY` | IBM Watsonx API key | - |
-| `IBM_WATSONX_PROJECT_ID` | IBM Watsonx project ID | - |
-| `IBM_WATSONX_URL` | IBM Watsonx endpoint URL | `https://eu-de.ml.cloud.ibm.com` |
-| `MODEL_NAME` | LLM model identifier | `ibm/granite-3-8b-instruct` |
-| `TOP_K_RESULTS` | Number of similar results | `5` |
-| `OFFLINE_MODE` | Force offline mode | `False` |
-
-### Model Parameters
-
-- **Sentence Transformer**: `all-MiniLM-L6-v2` (384 dimensions)
-- **FAISS Index**: IndexFlatL2 (exact search)
-- **LLM Temperature**: 0.7
-- **LLM Max Tokens**: 500
-
-## API Reference
-
-### FAISSSearcher
-
-```python
-from services.faiss_store import FAISSSearcher
-
-searcher = FAISSSearcher().load()
-results = searcher.search(query="How to control aphids?", top_k=5)
-```
-
-### WatsonxService
-
-```python
-from services.watsonx_service import WatsonxService
-
-service = WatsonxService().initialize()
-response = service.answer_query(query, context_qa_pairs)
-```
-
-### QueryHandler
-
-```python
-from services.query_handler import QueryHandler
-
-handler = QueryHandler(faiss_searcher, watsonx_service)
-result = handler.process_query(query, top_k=5, online_mode=True)
-```
-
-## Performance Considerations
-
-- **Embedding Generation**: ~1-2 minutes for 10,000 Q&A pairs
-- **FAISS Indexing**: < 1 second for 10,000 vectors
-- **Query Search**: < 100ms per query
-- **LLM Response**: 2-5 seconds (depends on network and API)
-
-## Deployment
-
-### Production Checklist
-
-- [ ] Set strong API keys in environment variables
-- [ ] Enable HTTPS for Streamlit
-- [ ] Configure proper logging
-- [ ] Set up monitoring and alerting
-- [ ] Implement rate limiting for API calls
-- [ ] Add authentication for the web interface
-- [ ] Configure backup for embeddings and index files
-
-### Docker Deployment (Optional)
-
-```dockerfile
-FROM python:3.9-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 8501
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue**: FAISS index not found
-- **Solution**: Run the data preparation scripts in order
-
-**Issue**: IBM Watsonx authentication failed
-- **Solution**: Verify API key and project ID in `.env` file
-
-**Issue**: Out of memory during embedding generation
-- **Solution**: Reduce batch size in `generate_embeddings.py`
-
-**Issue**: Slow query responses
-- **Solution**: Reduce `top_k` value or optimize FAISS index type
-
-## Contributing
-
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with proper documentation
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License.
-
-## Acknowledgments
-
-- Kisan Call Centre for the agricultural dataset
-- IBM Watsonx for the Granite LLM
-- Facebook AI Research for FAISS
-- Sentence Transformers team for the embedding models
-
-## Support
-
-For issues, questions, or contributions, please open an issue on the GitHub repository.
 
 ---
 
-**Built with the goal of empowering farmers through AI-driven agricultural knowledge dissemination.**
+## 📡 API Reference
+
+The Flask API server (`api_server.py`) provides these endpoints:
+
+### `GET /api/health`
+Health check — returns service status.
+
+**Response:**
+```json
+{
+    "status": "ok",
+    "faiss_ready": true,
+    "ai_ready": true,
+    "timestamp": "2026-02-16T19:45:00"
+}
+```
+
+### `POST /api/query`
+Process a farming question.
+
+**Request:**
+```json
+{
+    "query": "How to control aphids in mustard?",
+    "online_mode": true,
+    "top_k": 5
+}
+```
+
+**Response:**
+```json
+{
+    "query": "How to control aphids in mustard?",
+    "offline_answer": "Based on KCC data...",
+    "online_answer": "Here are effective methods to control aphids...",
+    "results": [
+        {
+            "question": "What is the control measure of aphid in mustard?",
+            "answer": "Spray neem oil 5ml/L every 10-15 days...",
+            "confidence": 92,
+            "distance": 0.104,
+            "crop": "Mustard",
+            "state": "Uttar Pradesh",
+            "category": "Pest Management"
+        }
+    ],
+    "num_results": 3,
+    "elapsed": 1.25,
+    "mode": "online"
+}
+```
+
+### `GET /api/popular`
+Get popular questions grouped by category.
+
+**Response:**
+```json
+{
+    "categories": [
+        {
+            "name": "Weather",
+            "icon": "🌤️",
+            "questions": ["Best time to sow paddy?", "..."]
+        },
+        {
+            "name": "Pest Solutions",
+            "icon": "🐛",
+            "questions": ["How to control aphids?", "..."]
+        }
+    ]
+}
+```
+
+---
+
+## 🧠 How It Works
+
+### 1. Knowledge Base (FAISS)
+
+The system uses a **FAISS (Facebook AI Similarity Search)** index built from 2,000 curated Q&A pairs from India's **Kisan Call Centre (KCC)** dataset.
+
+```
+Raw CSV (8GB) → Preprocessing → 2,000 QA pairs → Sentence Embeddings → FAISS Index
+```
+
+- **Embedding Model:** `all-MiniLM-L6-v2` (384-dimensional vectors)
+- **Index Type:** L2 (Euclidean distance)
+- **Max Distance Threshold:** 1.3 (results beyond this are filtered out)
+- **Confidence Formula:** `confidence = max(0, 1 - distance / max_distance)`
+
+### 2. AI Enhancement (Google Gemini)
+
+When **Online Mode** is enabled:
+- FAISS results are passed as context to Gemini
+- Gemini generates a comprehensive, farmer-friendly answer
+- System instruction guides Gemini as an "expert agricultural advisor for Indian farmers"
+
+When **no FAISS results** match:
+- Gemini receives the raw query directly
+- Provides a general AI-powered response (handles greetings, general questions)
+
+### 3. Query Processing Flow
+
+```python
+# Simplified flow
+def process_query(query, online_mode=True, top_k=5):
+    # 1. Search FAISS index
+    results = faiss_searcher.search(query, top_k=top_k, max_distance=1.3)
+    
+    # 2. Build offline answer from top results
+    offline_answer = format_results(results)
+    
+    # 3. If online mode, enhance with Gemini
+    if online_mode and gemini_service:
+        context = build_context(results)
+        online_answer = gemini_service.generate_response(
+            f"Based on this context: {context}\n\nAnswer: {query}"
+        )
+    
+    return {
+        'offline_answer': offline_answer,
+        'online_answer': online_answer,
+        'results': results
+    }
+```
+
+---
+
+## 📊 Dataset Information
+
+### Source
+- **Kisan Call Centre (KCC)** — Government of India's farmer helpline
+- **Original Size:** ~8GB CSV with millions of records
+- **Processed:** 2,000 high-quality Q&A pairs extracted and indexed
+
+### Data Format (`data/kcc_qa_pairs.json`)
+```json
+[
+    {
+        "question": "What is the control measure of aphid in mustard?",
+        "answer": "Spray neem oil solution (5ml/L) every 10-15 days...",
+        "crop": "Mustard",
+        "state": "Uttar Pradesh",
+        "category": "Pest Management"
+    }
+]
+```
+
+### Rebuilding the Index
+
+If you have the raw KCC CSV and want to rebuild:
+
+```bash
+python rebuild_index.py
+```
+
+This will:
+1. Read the CSV
+2. Extract Q&A pairs
+3. Generate embeddings using `all-MiniLM-L6-v2`
+4. Build and save the FAISS index
+
+> **Note:** The pre-built FAISS index is included in the repo, so rebuilding is optional.
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables (`.env`)
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GEMINI_API_KEY` | Yes | — | Google Gemini API key |
+| `GEMINI_MODEL_NAME` | No | `gemini-2.0-flash-001` | Gemini model to use |
+| `OFFLINE_MODE` | No | `false` | Set `true` to disable AI enhancement |
+
+### Config File (`config.py`)
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| `FAISS_INDEX_FILE` | `embeddings/faiss_index.bin` | Path to FAISS index |
+| `METADATA_FILE` | `embeddings/meta.pkl` | Path to metadata |
+| `SENTENCE_TRANSFORMER_MODEL` | `all-MiniLM-L6-v2` | Embedding model |
+| `LLM_MAX_TOKENS` | `1024` | Max response length |
+| `LLM_TEMPERATURE` | `0.7` | Response creativity (0-1) |
+
+---
+
+## 🌿 Branches
+
+| Branch | Description |
+|--------|-------------|
+| `main` | Stable Streamlit-only version |
+| `dashboard-ui` | Modern HTML/Tailwind dashboard + Flask API |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 👥 Team
+
+**KrishiMind AI** is developed as part of an agricultural technology initiative to empower Indian farmers with AI-powered insights.
+
+---
+
+## 📄 License
+
+This project is for educational and hackathon purposes.
+
+---
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+| Issue | Solution |
+|-------|----------|
+| `FAISS index not found` | Run `python rebuild_index.py` or check `embeddings/` folder |
+| `API key error` | Verify `GEMINI_API_KEY` in `.env` file |
+| `Module not found` | Run `pip install -r requirements.txt` |
+| `Port already in use` | Kill existing process or use a different port |
+| `No relevant results` | Try different phrasing or check FAISS index is loaded |
+
+### Quick Test
+
+```bash
+# Test FAISS search
+python test_relevance.py
+
+# Test API
+curl http://localhost:5000/api/health
+
+# Test query
+curl -X POST http://localhost:5000/api/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "How to control aphids?", "online_mode": true}'
+```
+
+---
+
+**Made with ❤️ for Indian Farmers 🇮🇳**
