@@ -1,561 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KrishiMind AI — Smart Agriculture Assistant</title>
-    <meta name="description" content="AI-powered agricultural advisor for Indian farmers. Get crop advice, pest solutions, weather updates, and market prices.">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { 'sans': ['Inter', 'sans-serif'] },
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0',
-                            300: '#86efac', 400: '#4ade80', 500: '#22c55e',
-                            600: '#16a34a', 700: '#15803d', 800: '#166534',
-                            900: '#14532d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #f8faf9; }
-
-        /* Sidebar gradient */
-        .sidebar-bg {
-            background: linear-gradient(180deg, #166534 0%, #14532d 50%, #0f3d1e 100%);
-        }
-        .sidebar-bg::after {
-            content: '';
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 40%;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3Cpath d='M60 300 Q70 200 90 150 Q100 120 95 80 Q92 60 100 40' stroke='%23ffffff15' fill='none' stroke-width='2'/%3E%3Cpath d='M80 300 Q85 220 100 170 Q110 140 108 100 Q105 75 115 50' stroke='%23ffffff10' fill='none' stroke-width='3'/%3E%3Cpath d='M100 300 Q100 240 110 190 Q118 160 120 120 Q118 90 130 60' stroke='%23ffffff15' fill='none' stroke-width='2'/%3E%3Cpath d='M120 300 Q115 230 125 180 Q132 150 135 110 Q133 80 145 50' stroke='%23ffffff10' fill='none' stroke-width='2'/%3E%3C/svg%3E") center bottom / contain no-repeat;
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        /* Glassmorphism cards */
-        .glass-card {
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.6);
-        }
-
-        /* Chat bubble */
-        .chat-user {
-            background: linear-gradient(135deg, #166534 0%, #16a34a 100%);
-            color: white;
-            border-radius: 20px 20px 4px 20px;
-        }
-        .chat-ai {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 20px 20px 20px 4px;
-        }
-
-        /* Stat card hover */
-        .stat-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        }
-
-        /* Smooth scrollbar */
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
-
-        /* Pulse dot */
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .pulse-dot { animation: pulse 2s ease-in-out infinite; }
-
-        /* Typing indicator */
-        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
-        .typing-dot { animation: bounce 1.4s infinite; }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        /* Sidebar nav item */
-        .nav-item { transition: all 0.2s ease; }
-        .nav-item:hover { background: rgba(255,255,255,0.12); }
-        .nav-item.active { background: rgba(255,255,255,0.18); }
-
-        /* Popular question chip */
-        .q-chip {
-            transition: all 0.15s ease;
-        }
-        .q-chip:hover {
-            background: #f0fdf4;
-            border-color: #22c55e;
-            transform: translateX(3px);
-        }
-
-        /* Fade in animation */
-        @keyframes fadeInUp {
-            from { opacity:0; transform:translateY(12px); }
-            to { opacity:1; transform:translateY(0); }
-        }
-        .fade-in { animation: fadeInUp 0.4s ease forwards; }
-
-        /* Skeleton loading */
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-        .skeleton {
-            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 8px;
-        }
-    </style>
+    <meta name="description" content="AI-powered agricultural advisor for Indian farmers">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="min-h-screen flex">
 
-    <!-- ════════════════════════════════════════════════════════
-         SIDEBAR
-         ════════════════════════════════════════════════════════ -->
-    <aside id="sidebar" class="sidebar-bg relative w-64 min-h-screen flex flex-col text-white z-30 flex-shrink-0">
-        <!-- Logo -->
-        <div class="px-6 pt-6 pb-4 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">🌾</div>
+<body>
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">🌾</div>
             <div>
-                <h1 class="text-lg font-extrabold tracking-tight">KrishiMind AI</h1>
-                <p class="text-[10px] text-white/50 font-medium tracking-wider uppercase">Powered by IBM Watsonx</p>
+                <h1 class="logo-text">KrishiMind AI</h1>
+                <p class="logo-sub">Powered by IBM Watsonx</p>
             </div>
         </div>
-
-        <!-- Navigation -->
-        <nav class="flex-1 px-3 mt-2 space-y-1 relative z-10">
-            <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium">
-                <span class="text-lg">📊</span> Dashboard
-            </a>
-            <a href="#" onclick="focusInput()" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium">
-                <span class="text-lg">🤖</span> Ask AI
-                <span class="ml-auto flex items-center gap-1.5 text-[10px] bg-white/15 px-2 py-0.5 rounded-full">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span> Online
-                </span>
-            </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium">
-                <span class="text-lg">🌤️</span> Weather
-            </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium">
-                <span class="text-lg">💰</span> Market Prices
-            </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium">
-                <span class="text-lg">🌱</span> Crop Guide
-            </a>
-            <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium">
-                <span class="text-lg">🐛</span> Pest Solutions
-            </a>
+        <nav class="nav">
+            <a href="#" class="nav-item active" data-page="dashboard" onclick="navigate('dashboard',this)">
+                <span>📊</span> Dashboard</a>
+            <a href="#" class="nav-item" data-page="chat" onclick="navigate('chat',this)">
+                <span>🤖</span> Ask AI
+                <span class="nav-badge"><span class="pulse-dot"></span> Online</span></a>
+            <a href="#" class="nav-item" data-page="weather" onclick="navigate('weather',this)">
+                <span>🌤️</span> Weather</a>
+            <a href="#" class="nav-item" data-page="market" onclick="navigate('market',this)">
+                <span>💰</span> Market Prices</a>
+            <a href="#" class="nav-item" data-page="crops" onclick="navigate('crops',this)">
+                <span>🌱</span> Crop Guide</a>
+            <a href="#" class="nav-item" data-page="pests" onclick="navigate('pests',this)">
+                <span>🐛</span> Pest Solutions</a>
         </nav>
-
-        <!-- Bottom -->
-        <div class="px-4 pb-5 relative z-10 space-y-3">
-            <!-- Language -->
-            <div class="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2 text-sm">
+        <div class="sidebar-bottom">
+            <div class="lang-select">
                 <span>🌐</span>
-                <select id="langSelect" class="bg-transparent text-white text-sm outline-none flex-1 cursor-pointer">
-                    <option value="en" class="text-gray-900">English</option>
-                    <option value="hi" class="text-gray-900">हिन्दी</option>
-                    <option value="mr" class="text-gray-900">मराठी</option>
-                    <option value="te" class="text-gray-900">తెలుగు</option>
-                    <option value="ta" class="text-gray-900">தமிழ்</option>
+                <select id="langSelect">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="mr">मराठी</option>
+                    <option value="te">తెలుగు</option>
+                    <option value="ta">தமிழ்</option>
                 </select>
             </div>
-            <!-- User -->
-            <div class="flex items-center gap-3 px-2">
-                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm">👤</div>
+            <div class="user-info">
+                <div class="user-avatar">👤</div>
                 <div>
-                    <p class="text-sm font-semibold">Farmer</p>
-                    <p class="text-[10px] text-white/50">KrishiMind User</p>
+                    <p class="user-name">Farmer</p>
+                    <p class="user-role">KrishiMind User</p>
                 </div>
             </div>
         </div>
     </aside>
 
-    <!-- ════════════════════════════════════════════════════════
-         MAIN CONTENT
-         ════════════════════════════════════════════════════════ -->
-    <main class="flex-1 flex flex-col min-h-screen overflow-hidden">
-
-        <!-- Top Search Bar -->
-        <header class="bg-white border-b border-gray-100 px-6 py-3 flex items-center gap-4 flex-shrink-0">
-            <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-            <div class="flex-1 relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                <input id="searchInput" type="text" placeholder="Ask anything about farming..."
-                    class="w-full pl-11 pr-4 py-3 bg-gray-50 rounded-2xl text-sm border border-transparent focus:border-brand-400 focus:bg-white focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-                    onkeydown="if(event.key==='Enter')sendQuery()">
+    <!-- MAIN -->
+    <main class="main">
+        <!-- Header -->
+        <header class="header">
+            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input id="globalSearch" type="text" placeholder="Ask anything about farming..."
+                    onkeydown="if(event.key==='Enter'){navigate('chat');askFromGlobal(this.value);this.value=''}">
             </div>
-            <button onclick="sendQuery()" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-3 rounded-2xl text-sm font-semibold transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                Ask
+            <button onclick="askFromGlobal(document.getElementById('globalSearch').value)" class="ask-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg> Ask
             </button>
-            <button onclick="toggleOnlineMode()" id="modeBtn" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors">
-                <span id="modeDot" class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>
+            <button onclick="toggleOnline()" id="modeBtn" class="mode-btn online">
+                <span id="modeDot" class="mode-dot"></span>
                 <span id="modeText">Online</span>
             </button>
         </header>
 
-        <!-- Scrollable Content -->
-        <div class="flex-1 flex overflow-hidden">
-
-            <!-- Center: Chat + Stats -->
-            <div class="flex-1 flex flex-col overflow-hidden">
-
-                <!-- Stat Cards Row -->
-                <div class="px-6 py-4 flex-shrink-0">
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="stat-card bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-medium text-gray-500">Wheat Price</span>
-                                <span class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-lg">🌾</span>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-900">₹2,450<span class="text-sm font-normal text-gray-400">/qt</span></p>
-                            <p class="text-xs text-emerald-600 font-semibold mt-1">↑ 3.2%</p>
+        <!-- Pages Container -->
+        <div class="pages">
+            <!-- PAGE: Dashboard -->
+            <section id="page-dashboard" class="page active">
+                <div class="page-pad">
+                    <h2 class="page-title">👋 Welcome back, Farmer!</h2>
+                    <p class="page-sub">Here's your farm overview for today</p>
+                    <!-- Stat Cards -->
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card" onclick="navigate('market')">
+                            <div class="stat-top"><span class="stat-label">Wheat Price</span><span
+                                    class="stat-icon bg-amber">🌾</span></div>
+                            <p class="stat-val">₹2,450<span class="stat-unit">/qt</span></p>
+                            <p class="stat-delta up">↑ 3.2%</p>
                         </div>
-                        <div class="stat-card bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-medium text-gray-500">Weather</span>
-                                <span class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg">🌤️</span>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-900">32°C</p>
-                            <p class="text-xs text-gray-500 mt-1">Partly Cloudy</p>
+                        <div class="stat-card" onclick="navigate('weather')">
+                            <div class="stat-top"><span class="stat-label">Temperature</span><span
+                                    class="stat-icon bg-blue">🌤️</span></div>
+                            <p class="stat-val" id="dashTemp">--°C</p>
+                            <p class="stat-delta" id="dashWeatherDesc">Loading...</p>
                         </div>
-                        <div class="stat-card bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-medium text-gray-500">Soil pH</span>
-                                <span class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-lg">🧪</span>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-900">6.8</p>
-                            <p class="text-xs text-emerald-600 font-semibold mt-1">Optimal</p>
+                        <div class="stat-card">
+                            <div class="stat-top"><span class="stat-label">Soil Moisture</span><span
+                                    class="stat-icon bg-green">💧</span></div>
+                            <p class="stat-val" id="dashSoil">--%</p>
+                            <p class="stat-delta" id="dashSoilStatus">Loading...</p>
                         </div>
-                        <div class="stat-card bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-medium text-gray-500">Active Alerts</span>
-                                <span class="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center text-lg">🔔</span>
-                            </div>
-                            <p class="text-2xl font-bold text-gray-900">2</p>
-                            <p class="text-xs text-red-500 font-semibold mt-1">New</p>
+                        <div class="stat-card">
+                            <div class="stat-top"><span class="stat-label">Active Alerts</span><span
+                                    class="stat-icon bg-red">🔔</span></div>
+                            <p class="stat-val">2</p>
+                            <p class="stat-delta warn">New</p>
                         </div>
                     </div>
+                    <!-- Quick Actions -->
+                    <h3 class="section-title">⚡ Quick Actions</h3>
+                    <div class="quick-grid">
+                        <button class="quick-card"
+                            onclick="navigate('chat');setTimeout(()=>askQuestion('What crops should I plant this season?'),300)">
+                            <span class="quick-icon">🌱</span><span>Crop Recommendation</span></button>
+                        <button class="quick-card"
+                            onclick="navigate('chat');setTimeout(()=>askQuestion('How to control pests in my farm?'),300)">
+                            <span class="quick-icon">🐛</span><span>Pest Alert Check</span></button>
+                        <button class="quick-card" onclick="navigate('weather')">
+                            <span class="quick-icon">🌧️</span><span>Weather Forecast</span></button>
+                        <button class="quick-card" onclick="navigate('market')">
+                            <span class="quick-icon">📈</span><span>Market Prices</span></button>
+                    </div>
+                    <!-- Popular Questions -->
+                    <h3 class="section-title">🔥 Popular Questions</h3>
+                    <div id="dashPopular" class="popular-grid"></div>
                 </div>
+            </section>
 
-                <!-- Chat Area -->
-                <div id="chatArea" class="flex-1 overflow-y-auto chat-scroll px-6 pb-4 space-y-4">
-                    <!-- Welcome message -->
-                    <div class="flex justify-center py-8">
-                        <div class="text-center max-w-md">
-                            <div class="text-5xl mb-4">🌾</div>
-                            <h2 class="text-xl font-bold text-gray-800 mb-2">Welcome to KrishiMind AI</h2>
-                            <p class="text-sm text-gray-500">Ask any farming question — crop advice, pest control, weather updates, market prices. I'm here to help!</p>
+            <!-- PAGE: Chat -->
+            <section id="page-chat" class="page">
+                <div class="chat-container">
+                    <div id="chatArea" class="chat-area">
+                        <div class="chat-welcome">
+                            <div class="cw-icon">🌾</div>
+                            <h2>Welcome to KrishiMind AI</h2>
+                            <p>Ask any farming question — crop advice, pest control, weather, market prices</p>
                         </div>
                     </div>
-                </div>
-
-                <!-- Input Bar (bottom) -->
-                <div class="px-6 py-4 bg-white border-t border-gray-100 flex-shrink-0">
-                    <div class="flex items-center gap-3 max-w-4xl mx-auto">
+                    <div class="chat-input-bar">
                         <input id="chatInput" type="text" placeholder="Type your farming question..."
-                            class="flex-1 px-5 py-3.5 bg-gray-50 rounded-2xl text-sm border border-gray-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 outline-none transition-all"
-                            onkeydown="if(event.key==='Enter')sendFromChat()">
-                        <button onclick="sendFromChat()" class="bg-brand-600 hover:bg-brand-700 text-white p-3.5 rounded-2xl transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                            onkeydown="if(event.key==='Enter')sendChat()">
+                        <button onclick="sendChat()" class="chat-send">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
                         </button>
                     </div>
                 </div>
-            </div>
+                <!-- Right Panel -->
+                <aside class="right-panel">
+                    <h3 class="rp-title">🔥 Popular Questions</h3>
+                    <div id="popularQuestions"></div>
+                    <hr class="rp-hr">
+                    <h3 class="rp-title">🕐 Recent History</h3>
+                    <div id="historyList">
+                        <p class="rp-empty">No queries yet</p>
+                    </div>
+                </aside>
+            </section>
 
-            <!-- Right Panel: Popular + History -->
-            <aside class="hidden xl:flex flex-col w-72 border-l border-gray-100 bg-white flex-shrink-0 overflow-y-auto">
-
-                <!-- Popular Questions -->
-                <div class="p-5">
-                    <h3 class="text-sm font-bold text-gray-800 mb-3">Popular Questions</h3>
-                    <div id="popularQuestions" class="space-y-2">
-                        <!-- Filled by JS -->
+            <!-- PAGE: Weather -->
+            <section id="page-weather" class="page">
+                <div class="page-pad">
+                    <h2 class="page-title">🌤️ Weather Forecast</h2>
+                    <p class="page-sub">Real-time weather data for your region</p>
+                    <div class="weather-location">
+                        <span>📍 Location:</span>
+                        <select id="weatherCity" onchange="loadWeather()">
+                            <option value="28.6139,77.2090">Delhi</option>
+                            <option value="19.0760,72.8777">Mumbai</option>
+                            <option value="26.9124,75.7873">Jaipur</option>
+                            <option value="25.3176,82.9739">Varanasi</option>
+                            <option value="30.7333,76.7794">Chandigarh</option>
+                            <option value="23.2599,77.4126">Bhopal</option>
+                            <option value="12.9716,77.5946">Bangalore</option>
+                            <option value="13.0827,80.2707">Chennai</option>
+                        </select>
+                    </div>
+                    <div class="weather-current" id="weatherCurrent">
+                        <div class="skeleton" style="height:180px;border-radius:20px"></div>
+                    </div>
+                    <h3 class="section-title">📅 7-Day Forecast</h3>
+                    <div class="forecast-grid" id="forecastGrid">
+                        <div class="skeleton" style="height:120px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:120px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:120px;border-radius:16px"></div>
                     </div>
                 </div>
+            </section>
 
-                <hr class="border-gray-100 mx-5">
-
-                <!-- Recent History -->
-                <div class="p-5">
-                    <h3 class="text-sm font-bold text-gray-800 mb-3">Recent History</h3>
-                    <div id="historyList" class="space-y-2">
-                        <p class="text-xs text-gray-400 italic">No queries yet</p>
+            <!-- PAGE: Market -->
+            <section id="page-market" class="page">
+                <div class="page-pad">
+                    <h2 class="page-title">💰 Market Prices</h2>
+                    <p class="page-sub">Live mandi rates from across India</p>
+                    <div class="market-grid" id="marketGrid">
+                        <div class="skeleton" style="height:100px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:100px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:100px;border-radius:16px"></div>
                     </div>
                 </div>
-            </aside>
+            </section>
+
+            <!-- PAGE: Crops -->
+            <section id="page-crops" class="page">
+                <div class="page-pad">
+                    <h2 class="page-title">🌱 Crop Guide</h2>
+                    <p class="page-sub">Complete growing guide for major Indian crops</p>
+                    <div class="crops-grid" id="cropsGrid">
+                        <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE: Pests -->
+            <section id="page-pests" class="page">
+                <div class="page-pad">
+                    <h2 class="page-title">🐛 Pest Solutions</h2>
+                    <p class="page-sub">Identify and treat common crop pests and diseases</p>
+                    <div class="pests-grid" id="pestsGrid">
+                        <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
-    <!-- ════════════════════════════════════════════════════════
-         JAVASCRIPT
-         ════════════════════════════════════════════════════════ -->
-    <script>
-        const API = 'http://localhost:5000/api';
-        let onlineMode = true;
-        let history = [];
-
-        // ── Init ────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPopularQuestions();
-            checkHealth();
-        });
-
-        // ── Health Check ────────────────────────────────────
-        async function checkHealth() {
-            try {
-                const res = await fetch(`${API}/health`);
-                const data = await res.json();
-                updateModeIndicator(data.ai_ready);
-            } catch {
-                updateModeIndicator(false);
-            }
-        }
-
-        function updateModeIndicator(aiReady) {
-            const dot = document.getElementById('modeDot');
-            const text = document.getElementById('modeText');
-            if (onlineMode && aiReady) {
-                dot.className = 'w-2 h-2 rounded-full bg-emerald-500 pulse-dot';
-                text.textContent = 'Online';
-            } else {
-                dot.className = 'w-2 h-2 rounded-full bg-gray-400';
-                text.textContent = 'Offline';
-            }
-        }
-
-        function toggleOnlineMode() {
-            onlineMode = !onlineMode;
-            const btn = document.getElementById('modeBtn');
-            if (onlineMode) {
-                btn.classList.remove('border-gray-300', 'text-gray-600');
-                btn.classList.add('border-brand-200', 'text-brand-700');
-                checkHealth();
-            } else {
-                btn.classList.add('border-gray-300', 'text-gray-600');
-                btn.classList.remove('border-brand-200', 'text-brand-700');
-                updateModeIndicator(false);
-            }
-        }
-
-        // ── Popular Questions ───────────────────────────────
-        async function loadPopularQuestions() {
-            const container = document.getElementById('popularQuestions');
-            try {
-                const res = await fetch(`${API}/popular`);
-                const data = await res.json();
-                const allQs = data.categories.flatMap(c => 
-                    c.questions.slice(0, 2).map(q => ({ q, icon: c.icon }))
-                );
-                container.innerHTML = allQs.map(({ q, icon }) => `
-                    <button onclick="askQuestion('${q.replace(/'/g, "\\'")}')"
-                        class="q-chip w-full text-left px-3 py-2.5 rounded-xl border border-gray-100 text-xs text-gray-700 hover:text-brand-700 transition-all flex items-start gap-2">
-                        <span class="flex-shrink-0 mt-0.5">${icon}</span>
-                        <span class="line-clamp-2">${q}</span>
-                    </button>
-                `).join('');
-            } catch {
-                container.innerHTML = '<p class="text-xs text-gray-400">Unable to load</p>';
-            }
-        }
-
-        function askQuestion(q) {
-            document.getElementById('chatInput').value = q;
-            sendFromChat();
-        }
-
-        // ── Send Query ──────────────────────────────────────
-        function sendQuery() {
-            const input = document.getElementById('searchInput');
-            const q = input.value.trim();
-            if (!q) return;
-            input.value = '';
-            processQuery(q);
-        }
-
-        function sendFromChat() {
-            const input = document.getElementById('chatInput');
-            const q = input.value.trim();
-            if (!q) return;
-            input.value = '';
-            processQuery(q);
-        }
-
-        function focusInput() {
-            document.getElementById('chatInput').focus();
-        }
-
-        async function processQuery(query) {
-            const chat = document.getElementById('chatArea');
-
-            // Remove welcome message
-            const welcome = chat.querySelector('.justify-center');
-            if (welcome) welcome.remove();
-
-            // Add user bubble
-            addBubble('user', query);
-
-            // Show typing indicator
-            const typingId = showTyping();
-
-            try {
-                const res = await fetch(`${API}/query`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        query,
-                        online_mode: onlineMode,
-                        top_k: 5
-                    })
-                });
-                const data = await res.json();
-
-                // Remove typing
-                removeTyping(typingId);
-
-                if (data.error) {
-                    addBubble('ai', `❌ ${data.error}`);
-                    return;
-                }
-
-                // Build AI response
-                let answer = '';
-                if (data.online_answer) {
-                    answer = data.online_answer;
-                } else if (data.offline_answer) {
-                    answer = data.offline_answer;
-                } else {
-                    answer = 'No relevant information found. Try asking about a specific crop, pest, or farming practice.';
-                }
-
-                // Confidence info
-                let meta = '';
-                if (data.results && data.results.length > 0) {
-                    const topConf = data.results[0].confidence;
-                    const crops = [...new Set(data.results.map(r => r.crop).filter(Boolean))];
-                    const states = [...new Set(data.results.map(r => r.state).filter(Boolean))];
-                    meta = `<div class="flex flex-wrap gap-2 mt-3">
-                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-semibold">✅ ${topConf}% match</span>
-                        ${crops.length ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 text-gray-600 text-[10px] font-medium">🌱 ${crops.join(', ')}</span>` : ''}
-                        ${states.length ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 text-gray-600 text-[10px] font-medium">📍 ${states.join(', ')}</span>` : ''}
-                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 text-gray-600 text-[10px] font-medium">⏱️ ${data.elapsed}s</span>
-                    </div>`;
-                }
-
-                addBubble('ai', answer + meta);
-
-                // Add to history
-                history.unshift({ query, time: new Date() });
-                updateHistory();
-
-            } catch (err) {
-                removeTyping(typingId);
-                addBubble('ai', '❌ Could not connect to the API server. Make sure <code>python api_server.py</code> is running.');
-            }
-        }
-
-        // ── Chat Bubbles ────────────────────────────────────
-        function addBubble(type, content) {
-            const chat = document.getElementById('chatArea');
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'} fade-in`;
-
-            const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-            if (type === 'user') {
-                wrapper.innerHTML = `
-                    <div class="max-w-lg">
-                        <div class="chat-user px-5 py-3 text-sm leading-relaxed">${escapeHtml(content)}</div>
-                        <p class="text-[10px] text-gray-400 text-right mt-1 mr-2">${time}</p>
-                    </div>`;
-            } else {
-                // Format the answer text
-                let formatted = content
-                    .replace(/\n/g, '<br>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/• /g, '<span class="text-brand-600 mr-1">•</span> ');
-
-                wrapper.innerHTML = `
-                    <div class="max-w-2xl flex gap-3">
-                        <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-sm flex-shrink-0 mt-1">🌾</div>
-                        <div>
-                            <div class="chat-ai px-5 py-4 text-sm leading-relaxed text-gray-700 shadow-sm">${formatted}</div>
-                            <p class="text-[10px] text-gray-400 mt-1 ml-2">${time} • IBM Watsonx Granite</p>
-                        </div>
-                    </div>`;
-            }
-
-            chat.appendChild(wrapper);
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        function showTyping() {
-            const chat = document.getElementById('chatArea');
-            const el = document.createElement('div');
-            el.id = 'typing-indicator';
-            el.className = 'flex justify-start fade-in';
-            el.innerHTML = `
-                <div class="flex gap-3">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-sm flex-shrink-0">🌾</div>
-                    <div class="chat-ai px-5 py-4 flex items-center gap-1.5">
-                        <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
-                        <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
-                        <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
-                    </div>
-                </div>`;
-            chat.appendChild(el);
-            chat.scrollTop = chat.scrollHeight;
-            return 'typing-indicator';
-        }
-
-        function removeTyping(id) {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        }
-
-        // ── History ─────────────────────────────────────────
-        function updateHistory() {
-            const container = document.getElementById('historyList');
-            if (history.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-400 italic">No queries yet</p>';
-                return;
-            }
-            container.innerHTML = history.slice(0, 8).map(h => `
-                <button onclick="askQuestion('${h.query.replace(/'/g, "\\'")}')"
-                    class="q-chip w-full text-left px-3 py-2.5 rounded-xl border border-gray-100 text-xs text-gray-600 transition-all flex items-center gap-2">
-                    <span class="text-gray-400">🕐</span>
-                    <span class="truncate">${escapeHtml(h.query)}</span>
-                </button>
-            `).join('');
-        }
-
-        // ── Helpers ─────────────────────────────────────────
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function toggleSidebar() {
-            const sb = document.getElementById('sidebar');
-            sb.classList.toggle('hidden');
-        }
-    </script>
+    <script src="app.js"></script>
 </body>
+
 </html>
