@@ -80,55 +80,171 @@
 
         <!-- Pages Container -->
         <div class="pages">
-            <!-- PAGE: Dashboard -->
+            <!-- PAGE: Dashboard (Bento Grid) -->
             <section id="page-dashboard" class="page active">
                 <div class="page-pad">
-                    <h2 class="page-title">👋 Welcome back, Farmer!</h2>
-                    <p class="page-sub">Here's your farm overview for today</p>
-                    <!-- Stat Cards -->
-                    <div class="stats-grid" id="statsGrid">
-                        <div class="stat-card" onclick="navigate('market')">
+                    <!-- ROW 1: Hero Banner -->
+                    <div class="hero-banner" id="heroBanner">
+                        <div class="hero-content">
+                            <p class="hero-greeting" id="heroGreeting">Good Evening</p>
+                            <h2 class="hero-title">Welcome back, Farmer! 👋</h2>
+                            <p class="hero-sub" id="heroSub">Loading farm overview...</p>
+                        </div>
+                        <div class="hero-right">
+                            <div class="hero-date" id="heroDate"></div>
+                            <div class="hero-weather-mini" id="heroWeatherMini">
+                                <span class="hero-temp" id="heroTemp">--°</span>
+                                <span class="hero-wicon" id="heroWicon">🌤️</span>
+                            </div>
+                        </div>
+                        <div class="hero-pattern"></div>
+                    </div>
+
+                    <!-- ROW 2: Bento Grid -->
+                    <div class="bento-grid">
+                        <!-- Wheat Price (with sparkline) -->
+                        <div class="bento-card bento-wheat" onclick="navigate('market')" style="--delay:0">
                             <div class="stat-top"><span class="stat-label">Wheat Price</span><span
                                     class="stat-icon bg-amber">🌾</span></div>
-                            <p class="stat-val">₹2,450<span class="stat-unit">/qt</span></p>
-                            <p class="stat-delta up">↑ 3.2%</p>
+                            <p class="stat-val" id="dashWheatPrice">₹2,450<span class="stat-unit">/qt</span></p>
+                            <p class="stat-delta up" id="dashWheatDelta">↑ 3.2%</p>
+                            <canvas id="wheatSparkline" class="sparkline-canvas" width="160" height="36"></canvas>
                         </div>
-                        <div class="stat-card" onclick="navigate('weather')">
-                            <div class="stat-top"><span class="stat-label">Temperature</span><span
+
+                        <!-- Weather (with mini forecast) -->
+                        <div class="bento-card bento-weather" onclick="navigate('weather')" style="--delay:1">
+                            <div class="stat-top"><span class="stat-label">Weather</span><span
                                     class="stat-icon bg-blue">🌤️</span></div>
                             <p class="stat-val" id="dashTemp">--°C</p>
                             <p class="stat-delta" id="dashWeatherDesc">Loading...</p>
+                            <div class="mini-forecast" id="miniForecast"></div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-top"><span class="stat-label">Soil Moisture</span><span
-                                    class="stat-icon bg-green">💧</span></div>
-                            <p class="stat-val" id="dashSoil">--%</p>
+
+                        <!-- Soil Health (merged gauge) -->
+                        <div class="bento-card bento-soil" style="--delay:2">
+                            <div class="stat-top"><span class="stat-label">Soil Health</span><span
+                                    class="stat-icon bg-green">🧪</span></div>
+                            <div class="gauge-wrap">
+                                <svg class="gauge-ring" viewBox="0 0 80 80">
+                                    <circle cx="40" cy="40" r="34" fill="none" stroke="#e5e7eb" stroke-width="6" />
+                                    <circle id="soilGaugeCircle" cx="40" cy="40" r="34" fill="none" stroke="#22c55e"
+                                        stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6"
+                                        stroke-dashoffset="213.6" transform="rotate(-90 40 40)"
+                                        style="transition:stroke-dashoffset 1.5s ease" />
+                                </svg>
+                                <div class="gauge-center">
+                                    <span class="gauge-val" id="dashSoilVal">--</span>
+                                    <span class="gauge-label">Moisture</span>
+                                </div>
+                            </div>
                             <p class="stat-delta" id="dashSoilStatus">Loading...</p>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-top"><span class="stat-label">Active Alerts</span><span
-                                    class="stat-icon bg-red">🔔</span></div>
-                            <p class="stat-val">2</p>
-                            <p class="stat-delta warn">New</p>
+
+                        <!-- AI Daily Tip (tall anchor card) -->
+                        <div class="bento-card bento-aitip" style="--delay:3" id="aiTipCard">
+                            <div class="aitip-glow"></div>
+                            <div class="aitip-header">
+                                <span class="aitip-icon">🤖</span>
+                                <div>
+                                    <p class="aitip-title">AI Daily Tip</p>
+                                    <p class="aitip-sub">Powered by KrishiMind AI</p>
+                                </div>
+                            </div>
+                            <div class="aitip-body" id="aiTipBody">
+                                <div class="skeleton" style="height:14px;width:90%;border-radius:6px;margin-bottom:8px">
+                                </div>
+                                <div class="skeleton" style="height:14px;width:75%;border-radius:6px;margin-bottom:8px">
+                                </div>
+                                <div class="skeleton" style="height:14px;width:60%;border-radius:6px"></div>
+                            </div>
+                            <button class="aitip-ask"
+                                onclick="navigate('chat');setTimeout(()=>askQuestion('Give me a farming tip for today based on current weather and season'),300)">
+                                Ask more →
+                            </button>
+                        </div>
+
+                        <!-- 7-Day Temperature Chart -->
+                        <div class="bento-card bento-chart" style="--delay:4">
+                            <div class="stat-top"><span class="stat-label">📈 7-Day Temperature</span></div>
+                            <canvas id="tempChart" class="temp-chart-canvas"></canvas>
+                        </div>
+
+                        <!-- Market Ticker -->
+                        <div class="bento-card bento-ticker" style="--delay:5">
+                            <div class="stat-top"><span class="stat-label">💰 Market Prices — Top Crops</span>
+                                <a href="#" onclick="event.preventDefault();navigate('market')" class="ticker-link">View
+                                    all →</a>
+                            </div>
+                            <div class="ticker-scroll" id="tickerScroll">
+                                <div class="skeleton" style="height:56px;width:140px;border-radius:12px;flex-shrink:0">
+                                </div>
+                                <div class="skeleton" style="height:56px;width:140px;border-radius:12px;flex-shrink:0">
+                                </div>
+                                <div class="skeleton" style="height:56px;width:140px;border-radius:12px;flex-shrink:0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bento-card bento-actions" style="--delay:6">
+                            <p class="bento-section-head">⚡ Quick Actions</p>
+                            <div class="quick-grid">
+                                <button class="quick-card"
+                                    onclick="navigate('chat');setTimeout(()=>askQuestion('What crops should I plant this season?'),300)">
+                                    <span class="quick-icon">🌱</span>
+                                    <div><strong>Crop Advice</strong><small>AI recommendation</small></div>
+                                </button>
+                                <button class="quick-card"
+                                    onclick="navigate('chat');setTimeout(()=>askQuestion('How to control pests in my farm?'),300)">
+                                    <span class="quick-icon">🐛</span>
+                                    <div><strong>Pest Check</strong><small>Identify & treat</small></div>
+                                </button>
+                                <button class="quick-card" onclick="navigate('weather')">
+                                    <span class="quick-icon">🌧️</span>
+                                    <div><strong>Weather</strong><small>7-day forecast</small></div>
+                                </button>
+                                <button class="quick-card" onclick="navigate('market')">
+                                    <span class="quick-icon">📈</span>
+                                    <div><strong>Market</strong><small>Live mandi rates</small></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Crop Calendar -->
+                        <div class="bento-card bento-calendar" style="--delay:7">
+                            <p class="bento-section-head">🗓️ Crop Calendar — <span id="calSeasonName">Rabi
+                                    Season</span></p>
+                            <div class="calendar-timeline" id="cropCalendar"></div>
+                        </div>
+
+                        <!-- Popular Questions -->
+                        <div class="bento-card bento-popular" style="--delay:8">
+                            <p class="bento-section-head">🔥 Popular Questions</p>
+                            <div id="dashPopular" class="popular-grid"></div>
+                        </div>
+
+                        <!-- Activity Feed -->
+                        <div class="bento-card bento-feed" style="--delay:9">
+                            <p class="bento-section-head">📝 Activity Feed</p>
+                            <div id="activityFeed" class="activity-feed">
+                                <div class="feed-item feed-system"><span class="feed-dot dot-green"></span>
+                                    <div>
+                                        <p>System online — FAISS index loaded</p><small>Just now</small>
+                                    </div>
+                                </div>
+                                <div class="feed-item feed-system"><span class="feed-dot dot-blue"></span>
+                                    <div>
+                                        <p>AI service connected (Gemini)</p><small>Just now</small>
+                                    </div>
+                                </div>
+                                <div class="feed-item feed-system"><span class="feed-dot dot-amber"></span>
+                                    <div>
+                                        <p>Weather data synced</p><small>Just now</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <!-- Quick Actions -->
-                    <h3 class="section-title">⚡ Quick Actions</h3>
-                    <div class="quick-grid">
-                        <button class="quick-card"
-                            onclick="navigate('chat');setTimeout(()=>askQuestion('What crops should I plant this season?'),300)">
-                            <span class="quick-icon">🌱</span><span>Crop Recommendation</span></button>
-                        <button class="quick-card"
-                            onclick="navigate('chat');setTimeout(()=>askQuestion('How to control pests in my farm?'),300)">
-                            <span class="quick-icon">🐛</span><span>Pest Alert Check</span></button>
-                        <button class="quick-card" onclick="navigate('weather')">
-                            <span class="quick-icon">🌧️</span><span>Weather Forecast</span></button>
-                        <button class="quick-card" onclick="navigate('market')">
-                            <span class="quick-icon">📈</span><span>Market Prices</span></button>
-                    </div>
-                    <!-- Popular Questions -->
-                    <h3 class="section-title">🔥 Popular Questions</h3>
-                    <div id="dashPopular" class="popular-grid"></div>
                 </div>
             </section>
 
