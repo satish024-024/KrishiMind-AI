@@ -133,7 +133,7 @@ Indian farmers often lack access to timely, accurate agricultural information. K
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
-| **AI Model** | Google Gemini (`gemini-2.0-flash-001`) | Natural language understanding & generation |
+| **AI Model** | Google Gemini, watsonx (`gemini-2.0-flash-001, watsonx`) | Natural language understanding & generation |
 | **Vector Search** | FAISS (Facebook AI Similarity Search) | Fast semantic search over embeddings |
 | **Embeddings** | `all-MiniLM-L6-v2` (Sentence Transformers) | Convert text to vector embeddings |
 | **Backend API** | Flask + Flask-CORS | REST API for the dashboard |
@@ -147,7 +147,7 @@ Indian farmers often lack access to timely, accurate agricultural information. K
 ## 📁 Project Structure
 
 ```
-krishi-mitra-ai/
+krishiMind-ai/
 │
 ├── app.py                          # Streamlit UI (main interface)
 ├── api_server.py                   # Flask API server (for dashboard)
