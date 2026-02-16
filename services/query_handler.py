@@ -25,7 +25,7 @@ class QueryHandler:
         self.faiss_searcher = faiss_searcher
         self.watsonx_service = watsonx_service
     
-    def process_query(self, query, top_k=TOP_K_RESULTS, online_mode=True):
+    def process_query(self, query, top_k=TOP_K_RESULTS, online_mode=True, location_context=None, language='en'):
         """
         Process user query and return both offline and online answers
         
@@ -33,6 +33,8 @@ class QueryHandler:
             query: User query string
             top_k: Number of similar results to retrieve
             online_mode: Whether to generate LLM response
+            location_context: Optional string with date/time/location/season info
+            language: Target language for response (default: 'en')
             
         Returns:
             Dictionary with offline_answer and online_answer
@@ -50,8 +52,10 @@ class QueryHandler:
                 # Extract Q&A pairs for context
                 context_qa_pairs = [r['metadata'] for r in results]
                 
-                # Generate LLM response
-                online_answer = self.watsonx_service.answer_query(query, context_qa_pairs)
+                # Generate LLM response with location context
+                online_answer = self.watsonx_service.answer_query(
+                    query, context_qa_pairs, location_context=location_context, language=language
+                )
             except Exception as e:
                 online_answer = f"Error generating online response: {e}"
         

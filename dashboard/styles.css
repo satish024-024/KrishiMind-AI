@@ -1957,3 +1957,151 @@ body {
         display: none;
     }
 }
+
+/* ── LOCATION BADGE (Header) ──────────────────────────── */
+.location-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: var(--green-50);
+    border: 1.5px solid var(--green-200);
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--green-700);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.location-badge:hover {
+    background: var(--green-100);
+    border-color: var(--green-500);
+    transform: scale(1.03);
+}
+
+/* ── LOCATION PICKER MODAL ────────────────────────────── */
+.loc-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s;
+}
+
+.loc-modal-overlay.active {
+    display: flex;
+}
+
+.loc-modal {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 580px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.loc-modal-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--green-800);
+    margin-bottom: 0.3rem;
+}
+
+.loc-modal-sub {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+}
+
+.loc-search {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.loc-search:focus {
+    border-color: var(--green-500);
+}
+
+.loc-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.loc-region {
+    width: 100%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.loc-btn {
+    padding: 8px 16px;
+    background: var(--gray-50);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.loc-btn:hover {
+    background: var(--green-50);
+    border-color: var(--green-500);
+    color: var(--green-700);
+    transform: translateY(-1px);
+}
+
+.loc-btn.selected {
+    background: var(--green-500);
+    border-color: var(--green-500);
+    color: #fff;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .location-badge span {
+        display: none;
+    }
+
+    .location-badge::after {
+        content: 'Location';
+        font-size: 0.7rem;
+    }
+}

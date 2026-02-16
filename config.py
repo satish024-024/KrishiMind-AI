@@ -46,7 +46,7 @@ TOP_K_RESULTS = int(os.getenv("TOP_K_RESULTS", "5"))
 OFFLINE_MODE = os.getenv("OFFLINE_MODE", "False").lower() == "true"
 
 # LLM Parameters
-LLM_MAX_TOKENS = 500
+LLM_MAX_TOKENS = 2048
 LLM_TEMPERATURE = 0.7
 LLM_TOP_P = 0.9
 

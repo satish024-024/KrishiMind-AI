@@ -86,17 +86,37 @@ class WatsonxService:
         except Exception as e:
             raise RuntimeError(f"Failed to generate response: {e}")
     
-    def answer_query(self, query, context_qa_pairs):
+    def answer_query(self, query, context_qa_pairs, location_context=None, language='en'):
         """
         Answer agricultural query using context from FAISS search
         
         Args:
             query: User query
             context_qa_pairs: List of relevant Q&A pairs from FAISS
+            location_context: Optional string with date/time/location/season info
+            language: Target language code (e.g. 'hi', 'mr')
             
         Returns:
             Generated answer
         """
+        LANG_MAP = {
+            'en': 'English',
+            'hi': 'Hindi',
+            'mr': 'Marathi',
+            'te': 'Telugu',
+            'ta': 'Tamil',
+            'kn': 'Kannada',
+            'bn': 'Bengali',
+            'gu': 'Gujarati',
+            'ml': 'Malayalam',
+            'pa': 'Punjabi'
+        }
+        
+        lang_name = LANG_MAP.get(language, 'English')
+        lang_instruction = ""
+        if language != 'en':
+            lang_instruction = f"- IMPORTANT: Answer ONLY in {lang_name} language."
+
         # Build context from Q&A pairs
         context_parts = []
         for i, qa in enumerate(context_qa_pairs, 1):
@@ -106,9 +126,17 @@ class WatsonxService:
         
         context = "\n\n".join(context_parts)
         
+        # Build location/date block
+        loc_block = ""
+        if location_context:
+            loc_block = f"""
+Farmer's Context (use this to give location & season-specific advice):
+{location_context}
+"""
+        
         # Create prompt
         prompt = f"""You are an expert agricultural advisor for Indian farmers. Based on the following relevant information from the Kisan Call Centre database, provide a helpful and accurate answer to the farmer's question.
-
+{loc_block}
 Relevant Information from Database:
 {context}
 
@@ -116,11 +144,13 @@ Farmer's Question: {query}
 
 Instructions:
 - Provide a clear, practical answer based on the information above
+- Tailor your advice to the farmer's LOCATION and CURRENT SEASON shown above
 - If the information contains Hindi text, you may include it for authenticity
 - Focus on actionable advice that farmers can implement
-- Keep the answer concise but comprehensive (2-3 paragraphs maximum)
-- If multiple solutions are mentioned, summarize the key recommendations
+- Provide a detailed answer with steps if necessary
+- Use bullet points for multiple recommendations
 - Use simple language that farmers can understand
+{lang_instruction}
 
 Expert Answer:"""
         

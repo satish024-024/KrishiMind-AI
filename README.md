@@ -120,12 +120,17 @@ Indian farmers often lack access to timely, accurate agricultural information. K
 | **Dashboard** | HTML + Tailwind CSS + JS | `localhost:5000/dashboard/` | Modern web experience |
 
 ### Dashboard Highlights
+- 🔐 **Secure Authentication** — Login/Register with session management
+- 📍 **Live Market Prices** — Real-time data from *data.gov.in* (Indian Mandis)
+- 🌤️ **Local Weather** — Auto-detected location based weather
 - 🌿 Dark green sidebar with wheat pattern
 - 📊 Quick stat cards (Weather, Prices, Soil pH, Alerts)
 - 💬 Real-time chat with typing indicators
 - 🔥 Popular questions panel
 - 🕐 Query history
 - 🟢 Online/Offline AI toggle
+
+> **See [API_GUIDE.md](API_GUIDE.md) for full details on external APIs used.**
 
 ---
 

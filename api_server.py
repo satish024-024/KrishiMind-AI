@@ -6,22 +6,24 @@ Wraps existing FAISS + Gemini services for the new dashboard
 import sys
 import os
 import time
-import random
+import json
 from pathlib import Path
 from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, url_for
 from flask_cors import CORS
 
 from config import FAISS_INDEX_FILE, METADATA_FILE, GEMINI_API_KEY
 from services.faiss_store import FAISSSearcher
 from services.query_handler import QueryHandler
+from services import auth_service
 
 DASHBOARD_DIR = Path(__file__).parent / 'dashboard'
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  # Secure session key
 CORS(app)
 
 # ── Global service instances ─────────────────────────────
@@ -54,16 +56,79 @@ def get_watsonx_service():
     return watsonx_service
 
 
-# ── Serve Dashboard ──────────────────────────────────────
+# ── AUTHENTICATION ROUTES ────────────────────────────────
+
+@app.route('/login')
+def login_page():
+    if 'user_id' in session:
+        return redirect('/dashboard')
+    return send_from_directory(str(DASHBOARD_DIR), 'login.html')
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_login():
+    data = request.json
+    user = auth_service.login_user(data.get('username'), data.get('password'))
+    if user:
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        session['full_name'] = user['full_name']
+        return jsonify({'success': True, 'user': user})
+    return jsonify({'success': False, 'message': 'Invalid username or password'}), 401
+
+@app.route('/api/auth/register', methods=['POST'])
+def api_register():
+    data = request.json
+    if not data or not data.get('username') or not data.get('password'):
+        return jsonify({'success': False, 'message': 'Missing fields'}), 400
+    
+    if len(data['password']) < 6:
+        return jsonify({'success': False, 'message': 'Password too short (min 6 chars)'}), 400
+
+    success = auth_service.register_user(data['username'], data['password'], data.get('full_name', 'Farmer'))
+    if success:
+        # Auto login after register
+        user = auth_service.login_user(data['username'], data['password'])
+        session['user_id'] = user['id']
+        session['username'] = user['username']
+        session['full_name'] = user['full_name']
+        return jsonify({'success': True, 'message': 'Registered successfully'})
+    return jsonify({'success': False, 'message': 'Username already taken'}), 409
+
+@app.route('/api/auth/logout', methods=['POST'])
+def api_logout():
+    session.clear()
+    return jsonify({'success': True})
+
+@app.route('/api/auth/me', methods=['GET'])
+def api_me():
+    if 'user_id' in session:
+        return jsonify({
+            'authenticated': True,
+            'username': session.get('username'),
+            'full_name': session.get('full_name')
+        })
+    return jsonify({'authenticated': False}), 401
+
+
+# ── Serve Dashboard (Protected) ──────────────────────────
 
 @app.route('/dashboard/')
 @app.route('/dashboard')
 @app.route('/')
 def serve_dashboard():
+    if 'user_id' not in session:
+        return redirect('/login')
     return send_from_directory(str(DASHBOARD_DIR), 'index.html')
 
 @app.route('/dashboard/<path:filename>')
 def serve_dashboard_files(filename):
+    # Allow public access to css/js/images even if not logged in (needed for login page styles)
+    if filename in ['login.html', 'styles.css', 'app.js']:
+        return send_from_directory(str(DASHBOARD_DIR), filename)
+    
+    if 'user_id' not in session and not filename.endswith(('.css', '.js', '.png', '.jpg', '.svg', '.ico')):
+        return redirect('/login')
+        
     return send_from_directory(str(DASHBOARD_DIR), filename)
 
 
@@ -73,6 +138,7 @@ def serve_dashboard_files(filename):
 def health():
     return jsonify({
         'status': 'ok',
+        'auth_enabled': True,
         'faiss_ready': get_faiss_searcher() is not None,
         'ai_ready': get_watsonx_service() is not None,
         'timestamp': datetime.now().isoformat()
@@ -88,8 +154,31 @@ def query():
     user_query = data['query'].strip()[:500]
     online_mode = data.get('online_mode', True)
     top_k = min(data.get('top_k', 5), 10)
+    location = data.get('location', 'India')  # e.g. "Lucknow, UP"
+    language = data.get('language', 'en')
 
     start = time.time()
+
+    # Build date/season context
+    now = datetime.now()
+    month = now.month
+    if month >= 10 or month <= 3:
+        season = 'Rabi'
+        season_crops = 'Wheat, Mustard, Barley, Chickpea, Peas'
+    elif 6 <= month <= 9:
+        season = 'Kharif'
+        season_crops = 'Rice, Maize, Cotton, Soybean, Groundnut'
+    else:
+        season = 'Zaid'
+        season_crops = 'Watermelon, Cucumber, Moong, Sunflower'
+
+    context_info = (
+        f"Current Date: {now.strftime('%d %B %Y, %A')}\n"
+        f"Current Time: {now.strftime('%I:%M %p IST')}\n"
+        f"Location: {location}\n"
+        f"Season: {season} (main crops: {season_crops})\n"
+        f"Month: {now.strftime('%B')}\n"
+    )
 
     searcher = get_faiss_searcher()
     if not searcher:
@@ -99,8 +188,12 @@ def query():
     handler = QueryHandler(searcher, ai)
 
     try:
-        result = handler.process_query(user_query, top_k=top_k,
-                                       online_mode=online_mode and ai is not None)
+        result = handler.process_query(
+            user_query, top_k=top_k,
+            online_mode=online_mode and ai is not None,
+            location_context=context_info,
+            language=language
+        )
         elapsed = time.time() - start
 
         retrieved = []
@@ -118,7 +211,23 @@ def query():
         ai_answer = result.get('online_answer', '')
         if not retrieved and ai and online_mode:
             try:
-                prompt = f"A farmer asked: '{user_query}'. Provide a helpful, practical response about agriculture in India."
+                LANG_MAP = {
+                    'en': 'English', 'hi': 'Hindi', 'mr': 'Marathi', 'te': 'Telugu',
+                    'ta': 'Tamil', 'kn': 'Kannada', 'bn': 'Bengali', 'gu': 'Gujarati',
+                    'ml': 'Malayalam', 'pa': 'Punjabi'
+                }
+                lang_name = LANG_MAP.get(language, language)
+                lang_instr = ""
+                if language != 'en':
+                    lang_instr = f"\nIMPORTANT: Answer strictly in {lang_name} language."
+                
+                prompt = (
+                    f"Context:\n{context_info}\n"
+                    f"A farmer in {location} asked: '{user_query}'.\n"
+                    f"Provide a helpful, practical response specific to their "
+                    f"location and the current {season} season in India.\n"
+                    f"{lang_instr}"
+                )
                 ai_answer = ai.generate_response(prompt)
             except:
                 pass
@@ -130,7 +239,9 @@ def query():
             'results': retrieved,
             'num_results': len(retrieved),
             'elapsed': round(elapsed, 2),
-            'mode': 'online' if (online_mode and ai) else 'offline'
+            'mode': 'online' if (online_mode and ai) else 'offline',
+            'location': location,
+            'timestamp': now.strftime('%d %b %Y, %I:%M %p')
         })
 
     except Exception as e:
@@ -181,41 +292,160 @@ def popular_questions():
     })
 
 
+# ── LIVE MARKET PRICES from data.gov.in ──────────────────
+DATAGOV_API_KEY = '579b464db66ec23bdd0000014d9fdfa6dbf34dfc731474736312f8b6'
+DATAGOV_RESOURCE = '35985678-0d79-46b4-9ed6-6f13308a1d24'
+_market_cache = {'data': None, 'ts': 0}  # Cache for 30 minutes
+
+# MSP rates 2024-25 (Government of India gazette) — used as fallback & reference
+MSP_DATA = {
+    'Wheat':       {'msp': 2275, 'icon': '🌾'},
+    'Rice':        {'msp': 2300, 'icon': '🍚'},
+    'Mustard':     {'msp': 5650, 'icon': '🌻'},
+    'Cotton':      {'msp': 6620, 'icon': '🏵️'},
+    'Soyabean':    {'msp': 4600, 'icon': '🫘'},
+    'Maize':       {'msp': 2090, 'icon': '🌽'},
+    'Gram':        {'msp': 5440, 'icon': '🫘'},
+    'Onion':       {'msp': None, 'icon': '🧅'},
+    'Tomato':      {'msp': None, 'icon': '🍅'},
+    'Potato':      {'msp': None, 'icon': '🥔'},
+}
+
+COMMODITIES_TO_FETCH = ['Wheat', 'Rice', 'Tomato', 'Onion', 'Cotton', 'Soyabean', 'Maize', 'Gram', 'Potato', 'Mustard']
+
+def _fetch_live_prices():
+    """Fetch live mandi prices from data.gov.in"""
+    import urllib.request, urllib.parse
+    results = []
+    for commodity in COMMODITIES_TO_FETCH:
+        try:
+            params = urllib.parse.urlencode({
+                'api-key': DATAGOV_API_KEY,
+                'format': 'json',
+                'limit': 5,
+                'filters[Commodity]': commodity,
+                'sort[Arrival_Date]': 'desc'
+            })
+            url = f'https://api.data.gov.in/resource/{DATAGOV_RESOURCE}?{params}'
+            req = urllib.request.Request(url, headers={'User-Agent': 'KrishiMindAI/1.0'})
+            r = urllib.request.urlopen(req, timeout=10)
+            data = json.loads(r.read())
+
+            records = data.get('records', [])
+            if not records:
+                continue
+
+            # Compute average modal price from latest records
+            modal_prices = [int(rec.get('Modal_Price', 0)) for rec in records if rec.get('Modal_Price')]
+            min_prices = [int(rec.get('Min_Price', 0)) for rec in records if rec.get('Min_Price')]
+            max_prices = [int(rec.get('Max_Price', 0)) for rec in records if rec.get('Max_Price')]
+
+            if not modal_prices:
+                continue
+
+            avg_modal = round(sum(modal_prices) / len(modal_prices))
+            avg_min = round(sum(min_prices) / len(min_prices)) if min_prices else avg_modal
+            avg_max = round(sum(max_prices) / len(max_prices)) if max_prices else avg_modal
+
+            # Use the most recent record for mandi name
+            latest = records[0]
+            mandi_name = f"{latest.get('Market', 'Unknown')}, {latest.get('State', '')}"
+            arrival_date = latest.get('Arrival_Date', '')
+
+            msp_info = MSP_DATA.get(commodity, {})
+            results.append({
+                'crop': commodity,
+                'icon': msp_info.get('icon', '🌱'),
+                'mandi': mandi_name,
+                'unit': 'qt',
+                'price': avg_modal,
+                'min_price': avg_min,
+                'max_price': avg_max,
+                'msp': msp_info.get('msp'),
+                'arrival_date': arrival_date,
+                'source': 'data.gov.in (Live)',
+                'history': modal_prices + [avg_modal] * (7 - len(modal_prices))  # pad to 7
+            })
+        except Exception as e:
+            print(f'[Market] Failed to fetch {commodity}: {e}')
+            continue
+    return results
+
+
+def _fallback_msp_prices():
+    """Fallback to hardcoded MSP data when API is unavailable"""
+    now = datetime.now()
+    day_seed = int(now.strftime('%Y%m%d'))
+    fallback = [
+        {"crop": "Wheat", "icon": "🌾", "mandi": "Azadpur, Delhi", "msp": 2275, "avg": 2450},
+        {"crop": "Rice", "icon": "🍚", "mandi": "Karnal, Haryana", "msp": 2300, "avg": 2380},
+        {"crop": "Mustard", "icon": "🌻", "mandi": "Jaipur, Rajasthan", "msp": 5650, "avg": 5200},
+        {"crop": "Cotton", "icon": "🏵️", "mandi": "Rajkot, Gujarat", "msp": 6620, "avg": 6350},
+        {"crop": "Soyabean", "icon": "🫘", "mandi": "Indore, MP", "msp": 4600, "avg": 4380},
+        {"crop": "Maize", "icon": "🌽", "mandi": "Davangere, Karnataka", "msp": 2090, "avg": 2150},
+        {"crop": "Gram", "icon": "🫘", "mandi": "Indore, MP", "msp": 5440, "avg": 5300},
+        {"crop": "Onion", "icon": "🧅", "mandi": "Lasalgaon, Maharashtra", "msp": None, "avg": 1500},
+        {"crop": "Tomato", "icon": "🍅", "mandi": "Kolar, Karnataka", "msp": None, "avg": 1100},
+        {"crop": "Potato", "icon": "🥔", "mandi": "Agra, UP", "msp": None, "avg": 820},
+    ]
+    prices = []
+    for i, c in enumerate(fallback):
+        seed = (day_seed * 31 + i * 7) % 100
+        change = round((seed - 50) / 15, 1)
+        base = c['msp'] if c['msp'] else c['avg']
+        history = [round(base * (1 + ((day_seed - 6 + d) * 31 + i * 13) % 100 - 50) / 15000) + base for d in range(7)]
+        prices.append({
+            'crop': c['crop'], 'icon': c['icon'], 'mandi': c['mandi'],
+            'unit': 'qt', 'price': c['avg'], 'msp': c['msp'],
+            'change': change, 'source': 'MSP 2024-25 (Offline)',
+            'history': history
+        })
+    return prices
+
+
 @app.route('/api/market-prices', methods=['GET'])
 def market_prices():
-    """Realistic Indian agricultural commodity prices"""
-    base_prices = [
-        {"crop": "Wheat", "icon": "🌾", "mandi": "Azadpur, Delhi", "unit": "qt",
-         "base": 2450, "msp": 2275, "change": 3.2},
-        {"crop": "Rice (Basmati)", "icon": "🍚", "mandi": "Karnal, Haryana", "unit": "qt",
-         "base": 3850, "msp": 2183, "change": 1.8},
-        {"crop": "Tomato", "icon": "🍅", "mandi": "Kolar, Karnataka", "unit": "qt",
-         "base": 1200, "msp": None, "change": -5.4},
-        {"crop": "Onion", "icon": "🧅", "mandi": "Lasalgaon, Maharashtra", "unit": "qt",
-         "base": 1680, "msp": None, "change": 2.1},
-        {"crop": "Cotton", "icon": "🏵️", "mandi": "Rajkot, Gujarat", "unit": "qt",
-         "base": 6200, "msp": 6620, "change": -0.8},
-        {"crop": "Soybean", "icon": "🫘", "mandi": "Indore, MP", "unit": "qt",
-         "base": 4350, "msp": 4600, "change": 1.5},
-        {"crop": "Mustard", "icon": "🌻", "mandi": "Jaipur, Rajasthan", "unit": "qt",
-         "base": 5100, "msp": 5650, "change": 0.9},
-        {"crop": "Potato", "icon": "🥔", "mandi": "Agra, UP", "unit": "qt",
-         "base": 820, "msp": None, "change": -2.3},
-        {"crop": "Sugarcane", "icon": "🎋", "mandi": "Muzaffarnagar, UP", "unit": "qt",
-         "base": 350, "msp": 315, "change": 0.5},
-        {"crop": "Maize", "icon": "🌽", "mandi": "Davangere, Karnataka", "unit": "qt",
-         "base": 2090, "msp": 2090, "change": 1.2},
-    ]
-    # Add slight random variance to simulate real-time
-    for p in base_prices:
-        variance = random.uniform(-0.5, 0.5)
-        p['price'] = round(p['base'] + p['base'] * variance / 100)
-        p['change'] = round(p['change'] + random.uniform(-0.3, 0.3), 1)
-        # Weekly price history (7 values)
-        p['history'] = [round(p['base'] * (1 + random.uniform(-3, 3)/100)) for _ in range(7)]
-        p['history'][-1] = p['price']
-        del p['base']
-    return jsonify({'prices': base_prices, 'updated': datetime.now().isoformat()})
+    """Live mandi prices from data.gov.in + Govt MSP for reference.
+       Cached for 30 minutes. Falls back to MSP data if API fails.
+    """
+    now = datetime.now()
+
+    # Check cache (30 min = 1800 sec)
+    if _market_cache['data'] and (time.time() - _market_cache['ts']) < 1800:
+        return jsonify(_market_cache['data'])
+
+    # Try live API
+    live_prices = _fetch_live_prices()
+
+    if live_prices and len(live_prices) >= 3:
+        # Compute change as (price - MSP) / MSP % for MSP crops
+        for p in live_prices:
+            if p['msp']:
+                p['change'] = round((p['price'] - p['msp']) / p['msp'] * 100, 1)
+            else:
+                # For non-MSP crops, use min vs modal as proxy
+                p['change'] = round((p['price'] - p.get('min_price', p['price'])) / max(p['price'], 1) * 100, 1)
+
+        result = {
+            'prices': live_prices,
+            'source': 'data.gov.in — Daily Price of Various Commodities (Govt. of India)',
+            'updated': now.isoformat(),
+            'live': True,
+            'note': 'Live prices from registered mandis across India. MSP = Minimum Support Price (Govt. guaranteed).'
+        }
+    else:
+        # Fallback to hardcoded MSP
+        result = {
+            'prices': _fallback_msp_prices(),
+            'source': 'Ministry of Agriculture & Farmers Welfare, Govt. of India (MSP 2024-25)',
+            'updated': now.isoformat(),
+            'live': False,
+            'note': 'MSP = Minimum Support Price (Govt. guaranteed). Live API unavailable, showing reference rates.'
+        }
+
+    _market_cache['data'] = result
+    _market_cache['ts'] = time.time()
+    return jsonify(result)
 
 
 @app.route('/api/crop-guide', methods=['GET'])

@@ -68,3 +68,7 @@ data/clean_kcc.csv
 
 # Old/unused service files
 services/gemini_service.py
+
+# Databases (SQLite)
+*.db
+users.db

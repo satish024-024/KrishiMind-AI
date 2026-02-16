@@ -21,8 +21,222 @@ const WMO = {
 function wmoIcon(code) { return (WMO[code] || '🌤️ Unknown').split(' ')[0]; }
 function wmoDesc(code) { return (WMO[code] || 'Unknown').split(' ').slice(1).join(' '); }
 
+// ── GLOBAL LOCATION SYSTEM ──────────────────────────────
+// Auto-detects via GPS on first visit, stored in localStorage
+let userLocation = JSON.parse(localStorage.getItem('krishimind_location') || 'null');
+// { name: "Amravati", lat: "20.9320", lon: "77.7523" }
+
+// All known cities with coords for nearest-match
+const KNOWN_CITIES = [
+    { name: 'Amravati', lat: 20.9320, lon: 77.7523 },
+    { name: 'Nagpur', lat: 21.1458, lon: 79.0882 },
+    { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
+    { name: 'Pune', lat: 18.5204, lon: 73.8567 },
+    { name: 'Nashik', lat: 19.9975, lon: 73.7898 },
+    { name: 'Aurangabad', lat: 19.8762, lon: 75.3433 },
+    { name: 'Kolhapur', lat: 16.7050, lon: 74.2433 },
+    { name: 'Solapur', lat: 17.6599, lon: 75.9064 },
+    { name: 'Delhi', lat: 28.6139, lon: 77.2090 },
+    { name: 'Lucknow', lat: 26.8467, lon: 80.9462 },
+    { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
+    { name: 'Chandigarh', lat: 30.7333, lon: 76.7794 },
+    { name: 'Varanasi', lat: 25.3176, lon: 82.9739 },
+    { name: 'Bhopal', lat: 23.2599, lon: 77.4126 },
+    { name: 'Indore', lat: 22.7196, lon: 75.8577 },
+    { name: 'Agra', lat: 27.1767, lon: 78.0081 },
+    { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
+    { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
+    { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
+    { name: 'Kochi', lat: 9.9312, lon: 76.2673 },
+    { name: 'Kolkata', lat: 22.5726, lon: 88.3639 },
+    { name: 'Patna', lat: 25.6093, lon: 85.1376 },
+    { name: 'Ranchi', lat: 23.3441, lon: 85.3096 },
+    { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
+    { name: 'Rajkot', lat: 22.3039, lon: 70.8022 },
+    { name: 'Raipur', lat: 21.2514, lon: 81.6296 },
+    { name: 'Ludhiana', lat: 30.9010, lon: 75.8573 },
+    { name: 'Karnal', lat: 29.6857, lon: 76.9905 },
+    { name: 'Amritsar', lat: 31.6340, lon: 74.8723 },
+];
+
+function getLocationName() {
+    return userLocation ? userLocation.name : 'India';
+}
+function getLocationCoords() {
+    return userLocation ? { lat: userLocation.lat, lon: userLocation.lon } : { lat: '20.5937', lon: '78.9629' };
+}
+function getFullTimestamp() {
+    const now = new Date();
+    const date = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const time = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    return `${date}, ${time}`;
+}
+
+// Find nearest known city to given GPS coordinates
+function findNearestCity(lat, lon) {
+    let nearest = KNOWN_CITIES[0], minDist = Infinity;
+    KNOWN_CITIES.forEach(city => {
+        const d = Math.sqrt(Math.pow(city.lat - lat, 2) + Math.pow(city.lon - lon, 2));
+        if (d < minDist) { minDist = d; nearest = city; }
+    });
+    return nearest;
+}
+
+// Auto-detect location using browser GPS + reverse geocoding
+async function autoDetectLocation() {
+    const badge = document.getElementById('locationBadgeText');
+    if (badge) badge.textContent = '📡 Detecting...';
+
+    try {
+        const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: false, timeout: 8000, maximumAge: 300000
+            });
+        });
+
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        // Try reverse geocoding with Nominatim (free, no key)
+        let cityName = null;
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`,
+                { headers: { 'User-Agent': 'KrishiMindAI/1.0' } }
+            );
+            const geo = await res.json();
+            cityName = geo.address?.city || geo.address?.town || geo.address?.county || geo.address?.state_district;
+        } catch { /* Nominatim failed, will use nearest match */ }
+
+        // Find nearest known city
+        const nearest = findNearestCity(lat, lon);
+
+        // Use geocoded name if available, otherwise nearest city name
+        const finalName = cityName || nearest.name;
+
+        setLocationSilently(finalName, String(lat), String(lon));
+        addFeedItem(`📍 Location auto-detected: ${finalName}`, 'dot-blue');
+
+    } catch (err) {
+        // GPS denied or failed — default to Delhi silently
+        console.log('Geolocation unavailable:', err.message);
+        const fallback = KNOWN_CITIES.find(c => c.name === 'Delhi') || KNOWN_CITIES[0];
+        setLocationSilently(fallback.name, String(fallback.lat), String(fallback.lon));
+        addFeedItem(`📍 Using default location: ${fallback.name}`, 'dot-blue');
+    }
+}
+
+// Set location without opening/closing the modal
+function setLocationSilently(name, lat, lon) {
+    userLocation = { name, lat, lon };
+    localStorage.setItem('krishimind_location', JSON.stringify(userLocation));
+    updateLocationUI();
+    // Reload widgets with new location
+    loadWeather();
+    loadAIDailyTip();
+    loadMarketTicker();
+    initHeroBanner();
+}
+
+// Show location picker only when user CLICKS the badge
+function showLocationPicker() {
+    document.getElementById('locationModal').classList.add('active');
+    document.getElementById('locSearch').value = '';
+    setTimeout(() => document.getElementById('locSearch').focus(), 100);
+    filterLocations('');
+    // Highlight current selection
+    document.querySelectorAll('.loc-btn').forEach(btn => {
+        btn.classList.toggle('selected', userLocation && btn.textContent.trim() === userLocation.name);
+    });
+}
+
+function selectLocation(name, lat, lon) {
+    userLocation = { name, lat, lon };
+    localStorage.setItem('krishimind_location', JSON.stringify(userLocation));
+    document.getElementById('locationModal').classList.remove('active');
+    updateLocationUI();
+    // Reload everything with new location
+    loadWeather();
+    loadAIDailyTip();
+    loadMarketTicker();
+    initHeroBanner();
+    addFeedItem(`📍 Location changed to ${name}`, 'dot-blue');
+}
+
+function filterLocations(q) {
+    const lower = q.toLowerCase();
+    document.querySelectorAll('#locGrid .loc-btn').forEach(btn => {
+        btn.style.display = btn.textContent.toLowerCase().includes(lower) ? '' : 'none';
+    });
+    document.querySelectorAll('#locGrid .loc-region').forEach(region => {
+        let next = region.nextElementSibling;
+        let anyVisible = false;
+        while (next && !next.classList.contains('loc-region')) {
+            if (next.classList.contains('loc-btn') && next.style.display !== 'none') anyVisible = true;
+            next = next.nextElementSibling;
+        }
+        region.style.display = anyVisible ? '' : 'none';
+    });
+}
+
+function updateLocationUI() {
+    const badge = document.getElementById('locationBadgeText');
+    if (badge) badge.textContent = userLocation ? userLocation.name : 'Detecting...';
+    // Sync the weather page dropdown if it exists
+    const sel = document.getElementById('weatherCity');
+    if (sel && userLocation) {
+        for (let opt of sel.options) {
+            if (opt.text === userLocation.name) { sel.value = opt.value; break; }
+        }
+    }
+}
+
+// When user changes city from weather page dropdown → update global location
+function selectLocationFromDropdown(sel) {
+    const [lat, lon] = sel.value.split(',');
+    const name = sel.options[sel.selectedIndex].text;
+    selectLocation(name, lat, lon);
+}
+
+// ── AUTHENTICATION ──────────────────────────────────────
+async function checkAuth() {
+    try {
+        const r = await fetch(API + '/auth/me');
+        if (r.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+        const user = await r.json();
+        if (user.authenticated) {
+            document.querySelector('.user-name').textContent = user.full_name || user.username;
+            document.querySelector('.user-role').innerHTML = `<span style="color:#059669;font-weight:700">● Online</span>`;
+        }
+    } catch { /* stay silent on error */ }
+}
+
+async function logout() {
+    await fetch(API + '/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+}
+
 // ── INIT ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+
+    // Language
+    const ls = document.getElementById('langSelect');
+    if (ls) {
+        ls.value = localStorage.getItem('krishi_lang') || 'en';
+        ls.addEventListener('change', (e) => localStorage.setItem('krishi_lang', e.target.value));
+    }
+
+    if (!userLocation) {
+        // First visit → auto-detect via GPS (browser asks permission)
+        autoDetectLocation();
+    } else {
+        updateLocationUI();
+    }
+
     // All init calls in parallel for speed
     initHeroBanner();
     loadWeather();
@@ -31,6 +245,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCropCalendar();
     loadAIDailyTip();
     checkHealth();
+
+    // Close modal on overlay click (only if location already set)
+    document.getElementById('locationModal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('loc-modal-overlay') && userLocation) {
+            e.target.classList.remove('active');
+        }
+    });
 });
 
 // ── HERO BANNER ─────────────────────────────────────────
@@ -39,17 +260,18 @@ function initHeroBanner() {
     const greetings = h < 5 ? 'Good Night 🌙' : h < 12 ? 'Good Morning ☀️' : h < 17 ? 'Good Afternoon 🌤️' : 'Good Evening 🌇';
     document.getElementById('heroGreeting').textContent = greetings;
 
+    const loc = getLocationName();
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    document.getElementById('heroDate').innerHTML = `<div>${dateStr}</div><div style="font-weight:700;font-size:1.1em">${timeStr}</div>`;
+    document.getElementById('heroDate').innerHTML = `<div>📍 ${loc}</div><div>${dateStr}</div><div style="font-weight:700;font-size:1.1em">${timeStr}</div>`;
 
     // Rabi/Kharif season
     const month = now.getMonth() + 1;
     let season, subtext;
-    if (month >= 10 || month <= 3) { season = 'Rabi'; subtext = 'Rabi season active — Wheat, Mustard, Barley growing'; }
-    else if (month >= 6 && month <= 9) { season = 'Kharif'; subtext = 'Kharif season active — Rice, Maize, Cotton growing'; }
-    else { season = 'Zaid'; subtext = 'Zaid season — Watermelon, Cucumber, Moong growing'; }
+    if (month >= 10 || month <= 3) { season = 'Rabi'; subtext = `📍 ${loc} • Rabi season — Wheat, Mustard, Barley growing`; }
+    else if (month >= 6 && month <= 9) { season = 'Kharif'; subtext = `📍 ${loc} • Kharif season — Rice, Maize, Cotton growing`; }
+    else { season = 'Zaid'; subtext = `📍 ${loc} • Zaid season — Watermelon, Cucumber, Moong growing`; }
     document.getElementById('heroSub').textContent = subtext;
 }
 
@@ -91,9 +313,11 @@ async function checkHealth() {
 
 // ── WEATHER (Real-time Open-Meteo) ──────────────────────
 async function loadWeather() {
-    const sel = document.getElementById('weatherCity');
-    const [lat, lon] = sel.value.split(',');
-    const cityName = sel.options[sel.selectedIndex].text;
+    // Use global location, fallback to dropdown
+    const coords = getLocationCoords();
+    const lat = coords.lat;
+    const lon = coords.lon;
+    const cityName = getLocationName();
 
     try {
         const url = `${WEATHER_API}?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,apparent_temperature&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code&hourly=soil_moisture_0_to_1cm&timezone=Asia/Kolkata&forecast_days=7`;
@@ -341,11 +565,12 @@ async function loadMarketTicker() {
         const r = await fetch(API + '/market-prices');
         const d = await r.json();
         const scroll = document.getElementById('tickerScroll');
+        const liveBadge = d.live ? '<span style="font-size:0.55rem;color:#059669;font-weight:700;margin-left:4px">🟢 LIVE</span>' : '';
         scroll.innerHTML = d.prices.slice(0, 6).map(p => `
-            <div class="ticker-chip" onclick="navigate('market')">
+            <div class="ticker-chip" onclick="navigate('market')" title="${p.mandi} | ${p.source}">
                 <span class="tc-icon">${p.icon}</span>
                 <div class="tc-info">
-                    <p class="tc-name">${p.crop}</p>
+                    <p class="tc-name">${p.crop}${liveBadge}</p>
                     <p class="tc-price">₹${p.price.toLocaleString('en-IN')}</p>
                 </div>
                 <span class="tc-change ${p.change >= 0 ? 'up' : 'down'}">${p.change >= 0 ? '↑' : '↓'}${Math.abs(p.change)}%</span>
@@ -416,12 +641,14 @@ async function loadAIDailyTip() {
     try {
         const month = new Date().getMonth() + 1;
         const season = (month >= 10 || month <= 3) ? 'Rabi' : (month >= 6 && month <= 9) ? 'Kharif' : 'Zaid';
-        const q = `Give a short practical farming tip for ${season} season in February for Indian farmers. Keep it under 3 sentences.`;
+        const monthName = new Date().toLocaleString('en-IN', { month: 'long' });
+        const location = getLocationName();
+        const q = `Give a short practical farming tip for ${season} season in ${monthName} for farmers near ${location}, India. Keep it under 3 sentences.`;
 
         const r = await fetch(API + '/query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: q, online_mode: onlineMode, top_k: 3 })
+            body: JSON.stringify({ query: q, online_mode: onlineMode, top_k: 3, location })
         });
         const d = await r.json();
         const tip = d.online_answer || d.offline_answer || 'Apply balanced fertilizer during the vegetative stage. Monitor soil moisture weekly. Watch for aphids in mustard crops.';
@@ -464,21 +691,23 @@ async function loadMarketPrices() {
         const r = await fetch(API + '/market-prices');
         const d = await r.json();
         const grid = document.getElementById('marketGrid');
+        const isLive = d.live;
         grid.innerHTML = d.prices.map((p, i) => `
             <div class="market-card" style="animation-delay:${i * 0.05}s"
                  onclick="navigate('chat');setTimeout(()=>askQuestion('What is the current ${p.crop} price and market trend?'),300)">
                 <div class="mc-icon">${p.icon}</div>
                 <div class="mc-info">
-                    <p class="mc-name">${p.crop}</p>
+                    <p class="mc-name">${p.crop}${p.msp ? ' <span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:8px;font-size:0.6rem;font-weight:600">MSP ₹' + p.msp + '</span>' : ''}</p>
                     <p class="mc-mandi">📍 ${p.mandi}</p>
+                    <p style="font-size:0.6rem;color:#9ca3af;margin-top:2px">${isLive ? '🟢' : '📄'} ${p.source}${p.arrival_date ? ' • ' + p.arrival_date : ''}</p>
                 </div>
                 <div class="mc-right">
                     <p class="mc-price">₹${p.price.toLocaleString('en-IN')}/${p.unit}</p>
-                    <p class="mc-change ${p.change >= 0 ? 'up' : 'down'}">${p.change >= 0 ? '↑' : '↓'} ${Math.abs(p.change)}%</p>
+                    <p class="mc-change ${p.change >= 0 ? 'up' : 'down'}">${p.change >= 0 ? '↑' : '↓'} ${Math.abs(p.change)}%${p.msp && isLive ? ' vs MSP' : ''}</p>
                     <canvas class="mc-sparkline" width="80" height="30" id="spark-${i}"></canvas>
                 </div>
             </div>
-        `).join('');
+        `).join('') + `<p style="grid-column:1/-1;text-align:center;font-size:0.65rem;color:#9ca3af;padding:0.5rem">${isLive ? '🟢 LIVE' : '📄'} Source: ${d.source || 'Govt. of India'} • ${d.note || ''}</p>`;
 
         d.prices.forEach((p, i) => {
             const canvas = document.getElementById('spark-' + i);
@@ -602,12 +831,16 @@ async function processQuery(query) {
 
     addBubble('user', query);
     const typingEl = showTyping();
+    const location = getLocationName();
+
+    const langSelect = document.getElementById('langSelect');
+    const language = langSelect ? langSelect.value : 'en';
 
     try {
         const r = await fetch(API + '/query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query, online_mode: onlineMode, top_k: 5 })
+            body: JSON.stringify({ query, online_mode: onlineMode, top_k: 5, location, language })
         });
         const d = await r.json();
         typingEl.remove();
@@ -616,12 +849,23 @@ async function processQuery(query) {
 
         let answer = d.online_answer || d.offline_answer || 'No relevant results found. Try rephrasing your question.';
         let meta = '';
+        const serverTime = d.timestamp || getFullTimestamp();
+        const serverLoc = d.location || location;
+
         if (d.results && d.results.length > 0) {
             const top = d.results[0];
             const crops = [...new Set(d.results.map(r => r.crop).filter(Boolean))];
             meta = `<div class="bubble-meta">
                 <span class="meta-tag conf">✅ ${top.confidence}% match</span>
                 ${crops.length ? `<span class="meta-tag info">🌱 ${crops.join(', ')}</span>` : ''}
+                <span class="meta-tag info">📍 ${serverLoc}</span>
+                <span class="meta-tag info">📅 ${serverTime}</span>
+                <span class="meta-tag info">⏱️ ${d.elapsed}s</span>
+            </div>`;
+        } else {
+            meta = `<div class="bubble-meta">
+                <span class="meta-tag info">📍 ${serverLoc}</span>
+                <span class="meta-tag info">📅 ${serverTime}</span>
                 <span class="meta-tag info">⏱️ ${d.elapsed}s</span>
             </div>`;
         }
@@ -638,13 +882,14 @@ async function processQuery(query) {
 
 function addBubble(type, content) {
     const chat = document.getElementById('chatArea');
-    const time = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const ts = getFullTimestamp();
+    const loc = getLocationName();
     const div = document.createElement('div');
     div.className = 'bubble-row ' + type;
     if (type === 'user') {
-        div.innerHTML = `<div><div class="bubble user-b">${escapeHtml(content)}</div><p class="bubble-time">${time}</p></div>`;
+        div.innerHTML = `<div><div class="bubble user-b">${escapeHtml(content)}</div><p class="bubble-time">📍 ${loc} • ${ts}</p></div>`;
     } else {
-        div.innerHTML = `<div class="bubble-avatar">🌾</div><div><div class="bubble ai-b">${content}</div><p class="bubble-time">${time} • KrishiMind AI</p></div>`;
+        div.innerHTML = `<div class="bubble-avatar">🌾</div><div><div class="bubble ai-b">${content}</div><p class="bubble-time">${ts} • 📍 ${loc} • KrishiMind AI</p></div>`;
     }
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;

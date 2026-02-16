@@ -8,7 +8,7 @@
     <meta name="description" content="AI-powered agricultural advisor for Indian farmers">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/dashboard/styles.css">
 </head>
 
 <body>
@@ -18,7 +18,7 @@
             <div class="logo-icon">🌾</div>
             <div>
                 <h1 class="logo-text">KrishiMind AI</h1>
-                <p class="logo-sub">Powered by IBM Watsonx</p>
+                <p class="logo-sub">Powered by Google Gemini</p>
             </div>
         </div>
         <nav class="nav">
@@ -49,10 +49,13 @@
             </div>
             <div class="user-info">
                 <div class="user-avatar">👤</div>
-                <div>
-                    <p class="user-name">Farmer</p>
-                    <p class="user-role">KrishiMind User</p>
+                <div style="flex:1">
+                    <p class="user-name">User</p>
+                    <p class="user-role" style="font-size:0.7rem;color:#059669">● Online</p>
                 </div>
+                <button onclick="logout()"
+                    style="background:none;border:none;cursor:pointer;font-size:1.2rem;opacity:0.7"
+                    title="Logout">🚪</button>
             </div>
         </div>
     </aside>
@@ -67,6 +70,9 @@
                 <input id="globalSearch" type="text" placeholder="Ask anything about farming..."
                     onkeydown="if(event.key==='Enter'){navigate('chat');askFromGlobal(this.value);this.value=''}">
             </div>
+            <button onclick="showLocationPicker()" id="locationBadge" class="location-badge" title="Change location">
+                📍 <span id="locationBadgeText">Select Location</span>
+            </button>
             <button onclick="askFromGlobal(document.getElementById('globalSearch').value)" class="ask-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -286,14 +292,16 @@
                 <div class="page-pad">
                     <h2 class="page-title">🌤️ Weather Forecast</h2>
                     <p class="page-sub">Real-time weather data for your region</p>
-                    <div class="weather-location">
-                        <span>📍 Location:</span>
-                        <select id="weatherCity" onchange="loadWeather()">
+                    <div class="weather-location">\r\n <span>📍 Location:</span>\r\n <select id="weatherCity"
+                            onchange="selectLocationFromDropdown(this)">
+                            <option value="20.9320,77.7523">Amravati</option>
                             <option value="28.6139,77.2090">Delhi</option>
                             <option value="19.0760,72.8777">Mumbai</option>
+                            <option value="21.1458,79.0882">Nagpur</option>
                             <option value="26.9124,75.7873">Jaipur</option>
                             <option value="25.3176,82.9739">Varanasi</option>
                             <option value="30.7333,76.7794">Chandigarh</option>
+                            <option value="26.8467,80.9462">Lucknow</option>
                             <option value="23.2599,77.4126">Bhopal</option>
                             <option value="12.9716,77.5946">Bangalore</option>
                             <option value="13.0827,80.2707">Chennai</option>
@@ -350,7 +358,60 @@
         </div>
     </main>
 
-    <script src="app.js"></script>
+    <!-- LOCATION PICKER MODAL -->
+    <div id="locationModal" class="loc-modal-overlay">
+        <div class="loc-modal">
+            <h3 class="loc-modal-title">📍 Select Your Location</h3>
+            <p class="loc-modal-sub">Choose your nearest city for accurate weather, market prices, and AI advice</p>
+            <input type="text" id="locSearch" class="loc-search" placeholder="🔍 Search city..."
+                oninput="filterLocations(this.value)">
+            <div class="loc-grid" id="locGrid">
+                <!-- Maharashtra -->
+                <div class="loc-region">Maharashtra</div>
+                <button class="loc-btn" onclick="selectLocation('Amravati','20.9320','77.7523')">Amravati</button>
+                <button class="loc-btn" onclick="selectLocation('Nagpur','21.1458','79.0882')">Nagpur</button>
+                <button class="loc-btn" onclick="selectLocation('Mumbai','19.0760','72.8777')">Mumbai</button>
+                <button class="loc-btn" onclick="selectLocation('Pune','18.5204','73.8567')">Pune</button>
+                <button class="loc-btn" onclick="selectLocation('Nashik','19.9975','73.7898')">Nashik</button>
+                <button class="loc-btn" onclick="selectLocation('Aurangabad','19.8762','75.3433')">Aurangabad</button>
+                <button class="loc-btn" onclick="selectLocation('Kolhapur','16.7050','74.2433')">Kolhapur</button>
+                <button class="loc-btn" onclick="selectLocation('Solapur','17.6599','75.9064')">Solapur</button>
+                <!-- North India -->
+                <div class="loc-region">North India</div>
+                <button class="loc-btn" onclick="selectLocation('Delhi','28.6139','77.2090')">Delhi</button>
+                <button class="loc-btn" onclick="selectLocation('Lucknow','26.8467','80.9462')">Lucknow</button>
+                <button class="loc-btn" onclick="selectLocation('Jaipur','26.9124','75.7873')">Jaipur</button>
+                <button class="loc-btn" onclick="selectLocation('Chandigarh','30.7333','76.7794')">Chandigarh</button>
+                <button class="loc-btn" onclick="selectLocation('Varanasi','25.3176','82.9739')">Varanasi</button>
+                <button class="loc-btn" onclick="selectLocation('Bhopal','23.2599','77.4126')">Bhopal</button>
+                <button class="loc-btn" onclick="selectLocation('Indore','22.7196','75.8577')">Indore</button>
+                <button class="loc-btn" onclick="selectLocation('Agra','27.1767','78.0081')">Agra</button>
+                <!-- South India -->
+                <div class="loc-region">South India</div>
+                <button class="loc-btn" onclick="selectLocation('Bangalore','12.9716','77.5946')">Bangalore</button>
+                <button class="loc-btn" onclick="selectLocation('Chennai','13.0827','80.2707')">Chennai</button>
+                <button class="loc-btn" onclick="selectLocation('Hyderabad','17.3850','78.4867')">Hyderabad</button>
+                <button class="loc-btn" onclick="selectLocation('Kochi','9.9312','76.2673')">Kochi</button>
+                <!-- East India -->
+                <div class="loc-region">East India</div>
+                <button class="loc-btn" onclick="selectLocation('Kolkata','22.5726','88.3639')">Kolkata</button>
+                <button class="loc-btn" onclick="selectLocation('Patna','25.6093','85.1376')">Patna</button>
+                <button class="loc-btn" onclick="selectLocation('Ranchi','23.3441','85.3096')">Ranchi</button>
+                <!-- West India -->
+                <div class="loc-region">West & Central</div>
+                <button class="loc-btn" onclick="selectLocation('Ahmedabad','23.0225','72.5714')">Ahmedabad</button>
+                <button class="loc-btn" onclick="selectLocation('Rajkot','22.3039','70.8022')">Rajkot</button>
+                <button class="loc-btn" onclick="selectLocation('Raipur','21.2514','81.6296')">Raipur</button>
+                <!-- Punjab & Haryana -->
+                <div class="loc-region">Punjab & Haryana</div>
+                <button class="loc-btn" onclick="selectLocation('Ludhiana','30.9010','75.8573')">Ludhiana</button>
+                <button class="loc-btn" onclick="selectLocation('Karnal','29.6857','76.9905')">Karnal</button>
+                <button class="loc-btn" onclick="selectLocation('Amritsar','31.6340','74.8723')">Amritsar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard/app.js"></script>
 </body>
 
 </html>

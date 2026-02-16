@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — KrishiMind AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-dark: #047857;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Dark green fallback + Gradient + Image */
+            background-color: #022c22;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1625246333195-551e541c9a87?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            color: #fff;
+        }
+
+        /* Glassmorphism Card */
+        .login-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        p#subtext {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            color: #e2e8f0;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
+            /* Darker background for inputs */
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.4);
+            border-color: #34d399;
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Autofill fix */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #064e3b inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(4, 120, 87, 0.3);
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(4, 120, 87, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .switch-link {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .switch-link a {
+            color: #6ee7b7;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .switch-link a:hover {
+            color: #34d399;
+            text-decoration: underline;
+        }
+
+        .error-msg {
+            color: #fca5a5;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: none;
+            background: rgba(127, 29, 29, 0.4);
+            padding: 0.8rem;
+            border-radius: 12px;
+            border: 1px solid rgba(248, 113, 113, 0.2);
+            font-weight: 500;
+        }
+
+        /* Hidden by default */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <div class="logo">🌾</div>
+        <h1>KrishiMind AI</h1>
+        <p id="subtext">Sign in to access your smart farm assistant</p>
+
+        <div id="errorMsg" class="error-msg">Invalid credentials</div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="l_username" placeholder="e.g. farmer123" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="l_password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn">Sign In</button>
+            <div class="switch-link">
+                New user? <a onclick="toggleMode('register')">Create Account</a>
+            </div>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" class="hidden">
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="r_fullname" placeholder="e.g. Rajesh Kumar" required>
+            </div>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="r_username" placeholder="Choose a username" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="r_password" placeholder="Min 6 chars" required minlength="6">
+            </div>
+            <button type="submit" class="btn">Create Account</button>
+            <div class="switch-link">
+                Already have an account? <a onclick="toggleMode('login')">Sign In</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function toggleMode(mode) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('registerForm');
+            const subtext = document.getElementById('subtext');
+            const title = document.querySelector('h1');
+            const err = document.getElementById('errorMsg');
+
+            err.style.display = 'none';
+
+            if (mode === 'register') {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                subtext.innerText = "Join thousands of smart farmers";
+                document.title = "Register — KrishiMind AI";
+            } else {
+                regForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                subtext.innerText = "Sign in to access your smart farm assistant";
+                document.title = "Login — KrishiMind AI";
+            }
+        }
+
+        async function handleAuth(url, data) {
+            const btn = document.querySelector(url.includes('login') ? '#loginForm button' : '#registerForm button');
+            const originalText = btn.innerText;
+            btn.innerText = "Please wait...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    window.location.href = '/dashboard/';
+                } else {
+                    const err = document.getElementById('errorMsg');
+                    err.innerText = result.message || 'Authentication failed';
+                    err.style.display = 'block';
+                }
+            } catch (e) {
+                const err = document.getElementById('errorMsg');
+                err.innerText = "Connection error. Please try again.";
+                err.style.display = 'block';
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleAuth('/api/auth/login', {
+                username: document.getElementById('l_username').value,
+                password: document.getElementById('l_password').value
+            });
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleAuth('/api/auth/register', {
+                username: document.getElementById('r_username').value,
+                password: document.getElementById('r_password').value,
+                full_name: document.getElementById('r_fullname').value
+            });
+        });
+    </script>
+</body>
+
+</html>
