@@ -7,6 +7,7 @@ DB_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'users.db')
 
 def init_db():
     """Initialize the user database table."""
+    global DB_FILE
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
@@ -24,7 +25,6 @@ def init_db():
         conn.close()
     except Exception as e:
         print(f"[WARN] Failed to initialize file-based DB: {e}. Switching to in-memory DB.")
-        global DB_FILE
         DB_FILE = ':memory:'
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
