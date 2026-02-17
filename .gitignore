@@ -79,3 +79,4 @@ services/gemini_service.py
 *.db
 users.db
 .vercel
+.cache/

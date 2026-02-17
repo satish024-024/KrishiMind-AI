@@ -1,7 +1,8 @@
-# KrishiMind AI - Dependencies
+# KrishiMind AI - Dependencies (Railway/Production)
 
-# Web Framework (Streamlit UI)
-streamlit>=1.30.0
+# ── CRITICAL: CPU-only PyTorch (saves ~1.8GB vs CUDA version) ──
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch --index-url https://download.pytorch.org/whl/cpu
 
 # Flask API (Dashboard backend)
 flask>=3.0.0
@@ -10,16 +11,10 @@ flask-cors>=4.0.0
 # Google Gemini AI
 google-genai>=1.0.0
 
-# AI/ML Libraries
+# AI/ML Libraries (CPU only)
 sentence-transformers>=2.2.0
 faiss-cpu>=1.7.4
 numpy>=1.24.0
-
-# Data Processing
-pandas>=2.0.0
-
-# Visualization
-plotly>=5.18.0
 
 # Environment Management
 python-dotenv>=1.0.0

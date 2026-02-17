@@ -7,6 +7,7 @@ import sys
 import os
 import time
 import json
+import traceback
 from pathlib import Path
 from datetime import datetime
 
@@ -23,7 +24,7 @@ from services import auth_service
 DASHBOARD_DIR = Path(__file__).parent / 'dashboard'
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Secure session key
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24))  # Secure session key
 CORS(app)
 
 # ── Global service instances ─────────────────────────────
@@ -624,17 +625,32 @@ def stats():
         'last_updated': datetime.now().strftime('%d %b %Y')
     })
 
+# ── Pre-load services at import time (for gunicorn) ─────
+print("[STARTUP] Pre-loading services...")
+try:
+    get_faiss_searcher()
+except Exception as e:
+    print(f"[STARTUP][WARN] FAISS pre-load failed: {e}")
+    traceback.print_exc()
+
+try:
+    get_watsonx_service()
+except Exception as e:
+    print(f"[STARTUP][WARN] AI service pre-load failed: {e}")
+    traceback.print_exc()
+
+print("[STARTUP] Service pre-load complete.")
+
+
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
     print("=" * 50)
     print("  KrishiMind AI — API Server")
+    print(f"  Port: {port}")
     print("=" * 50)
 
-    # Pre-load services
-    get_faiss_searcher()
-    get_watsonx_service()
-
-    print("\n  Dashboard: http://localhost:5000/dashboard/")
-    print("  API:       http://localhost:5000/api/health")
+    print(f"\n  Dashboard: http://localhost:{port}/dashboard/")
+    print(f"  API:       http://localhost:{port}/api/health")
     print("=" * 50)
 
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False)
