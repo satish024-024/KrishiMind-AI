@@ -10,11 +10,20 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+# Check for offline mode/deployment
+OFFLINE_MODE = os.getenv("OFFLINE_MODE", "False").lower() == "true"
+
 # Project Paths
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 EMBEDDINGS_DIR = BASE_DIR / "embeddings"
 SERVICES_DIR = BASE_DIR / "services"
+
+# Cache Configuration (Important for Railway/Render)
+CACHE_DIR = BASE_DIR / ".cache"
+CACHE_DIR.mkdir(exist_ok=True)
+os.environ['SENTENCE_TRANSFORMERS_HOME'] = str(CACHE_DIR / "sentence_transformers")
+os.environ['HF_HOME'] = str(CACHE_DIR / "huggingface")
 
 # Ensure directories exist
 DATA_DIR.mkdir(exist_ok=True)
