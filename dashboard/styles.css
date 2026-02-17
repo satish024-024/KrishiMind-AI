@@ -1897,79 +1897,6 @@ body {
     }
 }
 
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE
-   ═══════════════════════════════════════════════════════ */
-@media(max-width:1100px) {
-    .right-panel {
-        display: none;
-    }
-
-    .bento-grid {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-areas:
-            "wheat   weather"
-            "soil    aitip"
-            "chart   aitip"
-            "ticker  ticker"
-            "actions actions"
-            "cal     cal"
-            "popular popular"
-            "feed    feed";
-    }
-}
-
-@media(max-width:768px) {
-    .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        transform: translateX(-100%);
-        z-index: 50;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    .menu-btn {
-        display: block;
-    }
-
-    .bento-grid {
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "wheat" "weather" "soil" "aitip"
-            "chart" "ticker" "actions" "cal" "popular" "feed";
-    }
-
-    .hero-banner {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-
-    .hero-right {
-        align-items: center;
-    }
-
-    .quick-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .popular-grid,
-    .market-grid,
-    .crops-grid,
-    .pests-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .ask-btn span:last-child {
-        display: none;
-    }
-}
-
 /* ── LOCATION BADGE (Header) ──────────────────────────── */
 .location-badge {
     display: flex;
@@ -2107,7 +2034,120 @@ body {
     font-weight: 600;
 }
 
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — FULL MOBILE LAYOUT
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Sidebar Overlay (mobile backdrop) ─────────────────── */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 45;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* ── TABLET (≤1100px) ──────────────────────────────────── */
+@media (max-width: 1100px) {
+    .right-panel {
+        display: none;
+    }
+
+    .bento-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-areas:
+            "wheat   weather"
+            "soil    aitip"
+            "chart   aitip"
+            "ticker  ticker"
+            "actions actions"
+            "cal     cal"
+            "popular popular"
+            "feed    feed"
+            "schemes schemes"
+            "stats   stats";
+    }
+
+    .page-pad {
+        padding: 1.25rem;
+    }
+}
+
+/* ── MOBILE (≤768px) ───────────────────────────────────── */
 @media (max-width: 768px) {
+
+    /* Sidebar: slide-in drawer */
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 260px;
+        transform: translateX(-100%);
+        z-index: 50;
+        box-shadow: none;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            box-shadow 0.3s ease;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Header: compact mobile layout */
+    .header {
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .search-wrap {
+        order: 10;
+        flex: 1 1 100%;
+    }
+
+    .search-wrap input {
+        padding: 0.6rem 1rem 0.6rem 2.2rem;
+        font-size: 0.82rem;
+        border-radius: 12px;
+    }
+
+    .ask-btn {
+        padding: 0.55rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.78rem;
+    }
+
+    .ask-btn span:last-child {
+        display: none;
+    }
+
+    .mode-btn {
+        padding: 0.45rem 0.7rem;
+        font-size: 0.7rem;
+    }
+
+    .location-badge {
+        padding: 5px 10px;
+        font-size: 0.72rem;
+    }
+
     .location-badge span {
         display: none;
     }
@@ -2115,5 +2155,492 @@ body {
     .location-badge::after {
         content: 'Location';
         font-size: 0.7rem;
+    }
+
+    /* Page padding */
+    .page-pad {
+        padding: 1rem 0.75rem;
+    }
+
+    /* Hero banner: stack vertically */
+    .hero-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+        padding: 1.25rem 1rem;
+        border-radius: 16px;
+    }
+
+    .hero-title {
+        font-size: 1.2rem;
+    }
+
+    .hero-sub {
+        font-size: 0.78rem;
+        max-width: 100%;
+    }
+
+    .hero-right {
+        align-items: center;
+        width: 100%;
+    }
+
+    .hero-weather-mini {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Bento grid: single column */
+    .bento-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "wheat"
+            "weather"
+            "soil"
+            "aitip"
+            "chart"
+            "ticker"
+            "actions"
+            "cal"
+            "popular"
+            "feed"
+            "schemes"
+            "stats";
+        gap: 0.75rem;
+    }
+
+    .bento-card {
+        padding: 1rem;
+        border-radius: 14px;
+    }
+
+    /* Quick actions: single column */
+    .quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Grids: single column */
+    .popular-grid,
+    .market-grid,
+    .crops-grid,
+    .pests-grid,
+    .forecast-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Weather card details */
+    .weather-current-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+        gap: 0.75rem;
+    }
+
+    .wc-details {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+
+    .wc-temp {
+        font-size: 2.5rem;
+    }
+
+    .wc-icon {
+        font-size: 3rem;
+    }
+
+    /* Chat: full width, no side panel */
+    #page-chat {
+        flex-direction: column;
+    }
+
+    .chat-area {
+        padding: 0.75rem;
+    }
+
+    .bubble {
+        max-width: 85%;
+        font-size: 0.82rem;
+        padding: 0.75rem 0.95rem;
+    }
+
+    .chat-input-bar {
+        padding: 0.6rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .chat-input-bar input {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.82rem;
+    }
+
+    .chat-send {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+    }
+
+    .chat-welcome {
+        padding: 2rem 1rem;
+    }
+
+    .cw-icon {
+        font-size: 2.5rem;
+    }
+
+    .chat-welcome h2 {
+        font-size: 1.1rem;
+    }
+
+    /* Market cards */
+    .market-card {
+        padding: 0.85rem 1rem;
+    }
+
+    .mc-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.4rem;
+    }
+
+    /* Crop & Pest cards */
+    .crop-card,
+    .pest-card {
+        padding: 1rem;
+    }
+
+    /* Ticker chips: scroll horizontal */
+    .ticker-chip {
+        min-width: 140px;
+        padding: 0.55rem 0.85rem;
+    }
+
+    /* Stat values */
+    .stat-val {
+        font-size: 1.4rem;
+    }
+
+    /* Section titles */
+    .page-title {
+        font-size: 1.25rem;
+    }
+
+    .page-sub {
+        font-size: 0.82rem;
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+    }
+
+    /* Location modal */
+    .loc-modal {
+        width: 95%;
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .loc-modal-title {
+        font-size: 1.1rem;
+    }
+
+    .loc-btn {
+        padding: 7px 12px;
+        font-size: 0.75rem;
+    }
+
+    /* Temperature chart */
+    .temp-chart-canvas {
+        height: 100px;
+    }
+
+    /* Gauge smaller */
+    .gauge-wrap {
+        width: 70px;
+        height: 70px;
+    }
+
+    .gauge-ring {
+        width: 70px;
+        height: 70px;
+    }
+
+    .gauge-val {
+        font-size: 1rem;
+    }
+}
+
+/* ── SMALL PHONE (≤480px) ──────────────────────────────── */
+@media (max-width: 480px) {
+
+    .header {
+        padding: 0.4rem 0.5rem;
+        gap: 0.35rem;
+    }
+
+    .menu-btn {
+        font-size: 1.1rem;
+        padding: 0.3rem;
+    }
+
+    .page-pad {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .hero-banner {
+        padding: 1rem 0.75rem;
+        border-radius: 14px;
+    }
+
+    .hero-title {
+        font-size: 1rem;
+    }
+
+    .hero-greeting {
+        font-size: 0.72rem;
+    }
+
+    .bento-grid {
+        gap: 0.6rem;
+    }
+
+    .bento-card {
+        padding: 0.85rem;
+        border-radius: 12px;
+    }
+
+    .stat-val {
+        font-size: 1.2rem;
+    }
+
+    .stat-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.95rem;
+    }
+
+    /* Weather details: 2-col on very small */
+    .wc-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .wc-temp {
+        font-size: 2rem;
+    }
+
+    .wc-icon {
+        font-size: 2.5rem;
+    }
+
+    /* Chat */
+    .bubble {
+        max-width: 90%;
+        font-size: 0.78rem;
+        padding: 0.65rem 0.85rem;
+    }
+
+    .bubble-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+
+    .chat-input-bar input {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .chat-send {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Ticker */
+    .ticker-chip {
+        min-width: 130px;
+        padding: 0.5rem 0.75rem;
+        gap: 0.4rem;
+    }
+
+    .tc-icon {
+        font-size: 1.1rem;
+    }
+
+    .tc-name {
+        font-size: 0.68rem;
+    }
+
+    .tc-price {
+        font-size: 0.78rem;
+    }
+
+    /* Quick actions */
+    .quick-card {
+        padding: 0.7rem 0.85rem;
+        font-size: 0.78rem;
+    }
+
+    .quick-icon {
+        font-size: 1.1rem;
+    }
+
+    /* Crop calendar */
+    .cal-task {
+        font-size: 0.7rem;
+    }
+
+    /* Modals full-screen on tiny phones */
+    .loc-modal {
+        width: 98%;
+        max-height: 90vh;
+        padding: 1.25rem;
+        border-radius: 14px;
+    }
+
+    /* Market cards */
+    .mc-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.2rem;
+        border-radius: 10px;
+    }
+
+    .mc-name {
+        font-size: 0.78rem;
+    }
+
+    .mc-price {
+        font-size: 0.95rem;
+    }
+
+    /* Sidebar slightly narrower */
+    .sidebar {
+        width: 240px;
+    }
+
+    .sidebar-logo {
+        padding: 1.25rem 1rem 0.75rem;
+    }
+
+    .logo-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+
+    .logo-text {
+        font-size: 1rem;
+    }
+
+    .nav-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.78rem;
+    }
+}
+
+/* ── TOUCH OPTIMIZATIONS ───────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Larger tap targets for touch */
+    .nav-item {
+        padding: 0.7rem 0.9rem;
+        min-height: 44px;
+    }
+
+    .quick-card {
+        min-height: 48px;
+    }
+
+    .pop-chip {
+        min-height: 44px;
+        padding: 0.6rem 0.85rem;
+    }
+
+    .ticker-chip {
+        min-height: 48px;
+    }
+
+    .loc-btn {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+
+    /* Remove hover animations on touch (they cause sticky states) */
+    .bento-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .quick-card:hover {
+        transform: none;
+    }
+
+    .pop-chip:hover {
+        transform: none;
+    }
+
+    /* Add active state instead */
+    .bento-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s;
+    }
+
+    .quick-card:active {
+        transform: scale(0.98);
+        background: var(--green-50);
+    }
+
+    .pop-chip:active {
+        background: var(--green-50);
+        border-color: var(--green-400);
+    }
+
+    .nav-item:active {
+        background: rgba(255, 255, 255, 0.18);
+    }
+}
+
+/* ── SAFE AREA (notch devices) ─────────────────────────── */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .chat-input-bar {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+
+    .sidebar-bottom {
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+}
+
+/* ── LANDSCAPE PHONE ───────────────────────────────────── */
+@media (max-height: 500px) and (orientation: landscape) {
+    .sidebar {
+        width: 200px;
+    }
+
+    .sidebar-logo {
+        padding: 0.75rem 1rem 0.5rem;
+    }
+
+    .nav-item {
+        padding: 0.4rem 0.75rem;
+    }
+
+    .hero-banner {
+        flex-direction: row;
+        text-align: left;
+        padding: 1rem;
+    }
+
+    .hero-right {
+        align-items: flex-end;
+    }
+
+    .chat-welcome {
+        padding: 1rem;
+    }
+
+    .cw-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
     }
 }
