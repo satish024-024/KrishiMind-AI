@@ -22,6 +22,12 @@ dist-ssr/
 *.sln
 *.sw?
 Thumbs.db
+.codex/
+.cursor/
+.gemini/
+.mcp.json
+.zed/
+opencode.json
 
 # Python
 __pycache__/
@@ -72,3 +78,4 @@ services/gemini_service.py
 # Databases (SQLite)
 *.db
 users.db
+.vercel

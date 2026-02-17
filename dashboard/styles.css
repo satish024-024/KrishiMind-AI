@@ -521,7 +521,8 @@ body {
         "chart   chart    chart   aitip"
         "ticker  ticker   ticker  ticker"
         "actions actions  cal     cal"
-        "popular popular  feed    feed";
+        "popular popular  feed    feed"
+        "schemes schemes  stats   stats";
     gap: 1rem;
 }
 
@@ -597,6 +598,17 @@ body {
 
 .bento-feed {
     grid-area: feed;
+    cursor: default;
+}
+
+.bento-schemes {
+    grid-area: schemes;
+    cursor: default;
+    overflow: hidden;
+}
+
+.bento-stats {
+    grid-area: stats;
     cursor: default;
 }
 

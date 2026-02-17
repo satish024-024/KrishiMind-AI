@@ -154,43 +154,46 @@ Indian farmers often lack access to timely, accurate agricultural information. K
 ```
 krishiMind-ai/
 │
-├── app.py                          # Streamlit UI (main interface)
-├── api_server.py                   # Flask API server (for dashboard)
-├── config.py                       # Configuration (API keys, paths, model settings)
-├── requirements.txt                # Python dependencies
-├── rebuild_index.py                # Script to rebuild FAISS index from CSV
-├── setup.py                        # Initial setup script
-├── quick_setup.py                  # Quick setup helper
-├── test_relevance.py               # Test FAISS relevance filtering
+├── app.py                          # 🐍 Streamlit UI
+│                                   # Main entry point for the Python-based interface.
+│                                   # Run with: streamlit run app.py
 │
-├── services/                       # Backend services (shared by both UIs)
-│   ├── __init__.py
-│   ├── watsonx_service.py          # AI service (uses Google Gemini internally)
-│   ├── faiss_store.py              # FAISS index loading and search
-│   ├── query_handler.py            # Orchestrates FAISS + AI responses
-│   ├── data_preprocessing.py       # Dataset processing utilities
-│   └── generate_embeddings.py      # Generate vector embeddings
+├── api_server.py                   # ⚡ Flask API Server
+│                                   # REST API backend that powers the HTML dashboard.
+│                                   # Handles routing, AI processing, and data serving.
+│                                   # Run with: python api_server.py
 │
-├── dashboard/                      # New HTML Dashboard
-│   └── index.html                  # Premium Tailwind CSS dashboard
+├── dashboard/                      # 🎨 Modern Web Dashboard
+│   ├── index.html                  # Main dashboard file. Built with HTML5 + Tailwind CSS.
+│   ├── app.js                      # Frontend logic (Chart.js, API calls, dynamic UI).
+│   └── styles.css                  # Custom styling and animations.
 │
-├── data/                           # Data files
-│   └── kcc_qa_pairs.json           # 2,000 Q&A pairs (extracted from KCC dataset)
+├── services/                       # ⚙️ Backend Micro-services
+│   ├── faiss_store.py              # FAISS Service: Loads and searches the vector index.
+│   ├── watsonx_service.py          # AI Service: Connects to Google Gemini API.
+│   ├── query_handler.py            # Logic Core: Orchestrates offline search + online AI.
+│   └── generate_embeddings.py      # Utility: Converts text to vectors using Sentence Transformers.
 │
-├── embeddings/                     # Pre-built search index
-│   ├── faiss_index.bin             # FAISS vector index
-│   ├── kcc_embeddings.pkl          # Sentence embeddings
-│   └── meta.pkl                    # Metadata for search results
+├── embeddings/                     # 🧠 Knowledge Base (Vector Store)
+│   ├── faiss_index.bin             # The actual FAISS index file (binary).
+│   ├── kcc_embeddings.pkl          # Serialized embeddings backup.
+│   └── meta.pkl                    # Metadata mapping (Answer text, Crop, State) to index IDs.
 │
-├── .streamlit/
-│   └── config.toml                 # Streamlit theme configuration
+├── data/                           # 📂 Raw Data
+│   └── kcc_qa_pairs.json           # JSON dataset of 2,000+ verified agricultural Q&A pairs.
 │
-├── .env.example                    # Environment variable template
-├── .gitignore                      # Git ignore rules
-├── README.md                       # This file
-├── DATASET_SETUP.md                # Dataset download instructions
-├── IBM_WATSONX_SETUP.md            # Legacy IBM Watsonx setup guide
-└── SETUP_SUMMARY.md                # Setup summary
+├── config.py                       # 🛠️ Configuration
+│   # Central place for API keys, file paths, and model settings.
+│
+├── rebuild_index.py                # 🔄 Maintenance Script
+│   # Run this to regenerate the FAISS index from the JSON dataset.
+│
+├── requirements.txt                # 📦 Dependencies
+│   # List of all Python libraries (flask, streamlit, google-genai, faiss-cpu, etc.)
+│
+└── .env                            # 🔒 Secrets
+    # Stores your API keys. (Never commit this file!)
+
 ```
 
 ---

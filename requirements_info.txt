@@ -1,0 +1,7 @@
+If you are deploying to Vercel, use this file as `requirements.txt` to avoid size limits.
+Or just keep `requirements.txt` commented out for `sentence-transformers`.
+
+Vercel has a 250MB limit for serverless functions.
+`sentence-transformers` + models > 500MB.
+
+If you deploy to **Render** or **Railway**, use `requirements-full.txt` (rename it to `requirements.txt`).

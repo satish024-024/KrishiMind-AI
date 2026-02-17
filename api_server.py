@@ -600,11 +600,36 @@ def pest_solutions():
     ]})
 
 
+@app.route('/api/schemes', methods=['GET'])
+def schemes():
+    """Government schemes data"""
+    return jsonify({'schemes': [
+        {"name": "PM-KISAN", "icon": "💸", "desc": "₹6,000/year income support for farmers"},
+        {"name": "PM Fasal Bima Yojana", "icon": "🛡️", "desc": "Crop insurance against natural calamities"},
+        {"name": "Soil Health Card", "icon": "🧪", "desc": "Free soil testing and nutrient recommendations"},
+        {"name": "Kisan Credit Card (KCC)", "icon": "💳", "desc": "Low interest loans for agricultural needs"},
+        {"name": "e-NAM", "icon": "📱", "desc": "National Agriculture Market for better prices"},
+        {"name": "Paramparagat Krishi Vikas", "icon": "🍂", "desc": "Promotion of organic farming"},
+    ]})
+
+
+@app.route('/api/stats', methods=['GET'])
+def stats():
+    """Knowledge base stats"""
+    # In a real app, these would be counted dynamically
+    return jsonify({
+        'qa_pairs': 2450,
+        'crops': 18,
+        'states': 29,
+        'last_updated': datetime.now().strftime('%d %b %Y')
+    })
+
 if __name__ == '__main__':
     print("=" * 50)
     print("  KrishiMind AI — API Server")
     print("=" * 50)
 
+    # Pre-load services
     get_faiss_searcher()
     get_watsonx_service()
 
