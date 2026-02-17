@@ -3,7 +3,7 @@
    Bento grid, real-time data, charts, gauges, calendar
    ═══════════════════════════════════════════════════════ */
 
-const API = window.location.origin + '/api';
+const API = window.KRISHI_API_URL || window.location.origin + '/api';
 const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
 let onlineMode = navigator.onLine; // auto-detect internet on load
 let isInternetAvailable = navigator.onLine;
