@@ -74,6 +74,23 @@ body {
     z-index: 40;
 }
 
+/* Mobile Overlay */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 30;
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .sidebar::after {
     content: '';
     position: absolute;
@@ -2058,8 +2075,10 @@ body {
 
 /* ── TABLET (≤1100px) ──────────────────────────────────── */
 @media (max-width: 1100px) {
-    .right-panel {
-        display: none;
+
+    .right-panel,
+    #rightPanel {
+        display: none !important;
     }
 
     .bento-grid {
@@ -2611,7 +2630,447 @@ body {
     }
 }
 
-/* ── LANDSCAPE PHONE ───────────────────────────────────── */
+/* ── PRICE PREDICTION PAGE ─────────────────────────────── */
+.pred-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pred-crop-select {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pred-crop-select label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    white-space: nowrap;
+}
+
+.pred-crop-select select {
+    padding: 0.6rem 1.2rem;
+    border-radius: 12px;
+    border: 2px solid var(--gray-200);
+    background: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+}
+
+.pred-crop-select select:focus {
+    outline: none;
+    border-color: var(--green-500);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+/* Prediction Metrics Row */
+.pred-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.pred-metric-card {
+    background: white;
+    border: 1px solid var(--gray-100);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    transition: all var(--transition);
+    animation: fadeUp 0.4s ease;
+}
+
+.pred-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.pred-metric-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-500);
+}
+
+.pred-metric-val {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    line-height: 1.1;
+}
+
+.pred-metric-unit {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+/* Chart Wrapper */
+.pred-chart-wrap {
+    background: white;
+    border: 1px solid var(--gray-100);
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.5s ease;
+}
+
+.pred-chart-container {
+    position: relative;
+    height: 350px;
+    margin: 1rem 0;
+}
+
+.pred-chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.pred-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    justify-content: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--gray-100);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-weight: 500;
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* Advisory Section */
+.pred-advisory-section {
+    margin-top: 1.5rem;
+}
+
+.pred-advisory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.advisory-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--gray-100);
+    padding: 1.25rem;
+    transition: all var(--transition);
+    animation: fadeUp 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.advisory-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.advisory-card.verdict-green::before {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.advisory-card.verdict-red::before {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.advisory-card.verdict-amber::before {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.advisory-card.verdict-blue::before {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.advisory-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.advisory-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.advisory-crop-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.advisory-crop-icon {
+    font-size: 1.5rem;
+}
+
+.advisory-crop-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.advisory-verdict-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.badge-green {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-red {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.badge-amber {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.advisory-reason {
+    font-size: 0.82rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.advisory-stats {
+    display: flex;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--gray-100);
+}
+
+.advisory-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.advisory-stat-label {
+    font-size: 0.65rem;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.advisory-stat-val {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.pred-disclaimer {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: #fefce8;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    color: #92400e;
+    line-height: 1.5;
+}
+
+/* Bento mini prediction widget */
+.bento-prediction-mini {
+    background: linear-gradient(135deg, #fff7ed, #fffbeb) !important;
+    border: 1px solid #fed7aa !important;
+}
+
+.bg-orange {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.pred-mini-verdict {
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* Prediction page responsive */
+@media (max-width: 768px) {
+    .pred-header {
+        flex-direction: column;
+    }
+
+    .pred-metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pred-chart-container {
+        height: 250px;
+    }
+
+    .pred-advisory-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pred-chart-legend {
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pred-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .pred-metric-val {
+        font-size: 1.4rem;
+    }
+
+    .pred-chart-container {
+        height: 200px;
+    }
+}
+
+
+.pred-source-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background: var(--blue-100);
+    color: var(--blue-600);
+    font-weight: 700;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    border: 1px solid var(--blue-200);
+}
+
+.pred-source-badge.synthetic {
+    background: var(--gray-100);
+    color: var(--gray-500);
+    border-color: var(--gray-200);
+}
+
+/* ── METHODOLOGY PANEL ───────────────────────────────────── */
+.pred-methodology {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.04), rgba(16, 185, 129, 0.04));
+    border-radius: 20px;
+    border: 1px solid var(--gray-100);
+}
+
+.pred-method-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.pred-method-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+    border: 1px solid var(--gray-100);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pred-method-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.pred-method-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.pred-method-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-500);
+    margin-bottom: 0.4rem;
+}
+
+.pred-method-desc {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    line-height: 1.3;
+}
+
+.pred-features-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.pred-feature-tag {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--blue-50), var(--green-50, #ecfdf5));
+    color: var(--blue-700, #1d4ed8);
+    font-weight: 600;
+    border: 1px solid var(--blue-100);
+    transition: all 0.2s;
+}
+
+.pred-feature-tag:hover {
+    background: var(--blue-100);
+    transform: scale(1.05);
+}
+
+.pred-accuracy-note {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    background: var(--gray-50);
+    border-left: 3px solid var(--amber-400, #f59e0b);
+    padding: 0.75rem 1rem;
+    border-radius: 0 12px 12px 0;
+    line-height: 1.5;
+}
+
 @media (max-height: 500px) and (orientation: landscape) {
     .sidebar {
         width: 200px;

@@ -1,0 +1,219 @@
+{
+    "description": "Crop price history for prediction model. MSP values are official CCEA-approved 2025-26 figures. Monthly price bands reflect typical Agmarknet mandi ranges (India). Prices are per quintal (INR).",
+    "msp_year": "2025-26",
+    "msp_source": "Cabinet Committee on Economic Affairs (CCEA), Government of India. PIB: pib.gov.in | agriwelfare.gov.in",
+    "unit": "INR per quintal",
+    "generated": "2026-02-23",
+    "crops": {
+        "Wheat": {
+            "msp": 2425,
+            "msp_note": "Rabi 2025-26. CCEA approved Nov 2024. (Prev 2024-25: 2275)",
+            "base_price": 2440,
+            "seasonal_pattern": "rabi",
+            "monthly_prices": [
+                2400,
+                2430,
+                2500,
+                2550,
+                2560,
+                2540,
+                2490,
+                2450,
+                2420,
+                2400,
+                2380,
+                2420
+            ],
+            "daily_volatility": 30
+        },
+        "Rice": {
+            "msp": 2369,
+            "msp_note": "Kharif 2025-26. Paddy Common. MSP ₹2369/qt. Grade A: ₹2389/qt. (Prev 2024-25: 2300)",
+            "base_price": 2400,
+            "seasonal_pattern": "kharif",
+            "monthly_prices": [
+                2350,
+                2380,
+                2400,
+                2420,
+                2450,
+                2480,
+                2460,
+                2420,
+                2380,
+                2360,
+                2340,
+                2370
+            ],
+            "daily_volatility": 40
+        },
+        "Mustard": {
+            "msp": 5950,
+            "msp_note": "Rabi 2025-26. Rapeseed & Mustard. CCEA approved Nov 2024. (Prev 2024-25: 5650)",
+            "base_price": 6050,
+            "seasonal_pattern": "rabi",
+            "monthly_prices": [
+                5800,
+                5900,
+                6100,
+                6300,
+                6250,
+                6100,
+                5950,
+                5850,
+                5800,
+                5750,
+                5780,
+                5850
+            ],
+            "daily_volatility": 80
+        },
+        "Cotton": {
+            "msp": 7710,
+            "msp_note": "Kharif 2025-26. Medium Staple. CCEA approved Jun 2025. Long Staple: ₹8110. (Prev 2024-25: 7121)",
+            "base_price": 6900,
+            "seasonal_pattern": "kharif",
+            "monthly_prices": [
+                6500,
+                6600,
+                6700,
+                6800,
+                6900,
+                7000,
+                6950,
+                6800,
+                6700,
+                6600,
+                6550,
+                6600
+            ],
+            "daily_volatility": 120
+        },
+        "Soyabean": {
+            "msp": 5328,
+            "msp_note": "Kharif 2025-26. Yellow. CCEA approved Jun 2025. (Prev 2024-25: 4892)",
+            "base_price": 5000,
+            "seasonal_pattern": "kharif",
+            "monthly_prices": [
+                4700,
+                4750,
+                4850,
+                4950,
+                5050,
+                5200,
+                5150,
+                5050,
+                4950,
+                4880,
+                4820,
+                4870
+            ],
+            "daily_volatility": 60
+        },
+        "Maize": {
+            "msp": 2400,
+            "msp_note": "Kharif 2025-26. CCEA approved Jun 2025. (Prev 2024-25: 2225)",
+            "base_price": 1900,
+            "seasonal_pattern": "kharif",
+            "monthly_prices": [
+                1750,
+                1800,
+                1850,
+                1950,
+                2000,
+                2100,
+                2050,
+                1950,
+                1880,
+                1820,
+                1770,
+                1800
+            ],
+            "daily_volatility": 35
+        },
+        "Gram": {
+            "msp": 5650,
+            "msp_note": "Rabi 2025-26. Bengal Gram (Chana). CCEA approved Nov 2024. (Prev 2024-25: 5440)",
+            "base_price": 5400,
+            "seasonal_pattern": "rabi",
+            "monthly_prices": [
+                5200,
+                5270,
+                5380,
+                5500,
+                5600,
+                5580,
+                5450,
+                5380,
+                5300,
+                5250,
+                5220,
+                5280
+            ],
+            "daily_volatility": 60
+        },
+        "Onion": {
+            "msp": null,
+            "msp_note": "No MSP — vegetables not covered under CCEA MSP scheme.",
+            "base_price": 2000,
+            "seasonal_pattern": "volatile",
+            "monthly_prices": [
+                1500,
+                1200,
+                1100,
+                1400,
+                1800,
+                2400,
+                3000,
+                3500,
+                2800,
+                2000,
+                1600,
+                1500
+            ],
+            "daily_volatility": 150
+        },
+        "Tomato": {
+            "msp": null,
+            "msp_note": "No MSP — vegetables not covered under CCEA MSP scheme.",
+            "base_price": 1200,
+            "seasonal_pattern": "volatile",
+            "monthly_prices": [
+                900,
+                800,
+                700,
+                1000,
+                1400,
+                2000,
+                2800,
+                3200,
+                2400,
+                1600,
+                1100,
+                1000
+            ],
+            "daily_volatility": 180
+        },
+        "Potato": {
+            "msp": null,
+            "msp_note": "No MSP — vegetables not covered under CCEA MSP scheme.",
+            "base_price": 1200,
+            "seasonal_pattern": "rabi",
+            "monthly_prices": [
+                900,
+                850,
+                800,
+                900,
+                1000,
+                1200,
+                1400,
+                1600,
+                1500,
+                1300,
+                1100,
+                1000
+            ],
+            "daily_volatility": 60
+        }
+    }
+}

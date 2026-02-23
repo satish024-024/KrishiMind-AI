@@ -38,6 +38,10 @@
                 <span>🌱</span> <span data-i18n="nav_crops">Crop Guide</span></a>
             <a href="#" class="nav-item" data-page="pests" onclick="navigate('pests',this)">
                 <span>🐛</span> <span data-i18n="nav_pests">Pest Solutions</span></a>
+            <a href="#" class="nav-item" data-page="prediction" onclick="navigate('prediction',this)">
+                <span>📈</span> <span data-i18n="nav_prediction">Price Prediction</span>
+                <span class="nav-badge"
+                    style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:0.55rem;padding:1px 6px">NEW</span></a>
         </nav>
         <div class="sidebar-bottom">
             <div class="lang-select">
@@ -116,8 +120,8 @@
                         <div class="bento-card bento-wheat" onclick="navigate('market')" style="--delay:0">
                             <div class="stat-top"><span class="stat-label" data-i18n="wheat_price">Wheat
                                     Price</span><span class="stat-icon bg-amber">🌾</span></div>
-                            <p class="stat-val" id="dashWheatPrice">₹2,450<span class="stat-unit">/qt</span></p>
-                            <p class="stat-delta up" id="dashWheatDelta">↑ 3.2%</p>
+                            <p class="stat-val" id="dashWheatPrice">--<span class="stat-unit">/qt</span></p>
+                            <p class="stat-delta" id="dashWheatDelta">Loading...</p>
                             <canvas id="wheatSparkline" class="sparkline-canvas" width="160" height="36"></canvas>
                         </div>
 
@@ -240,8 +244,25 @@
                             <div id="dashPopular" class="popular-grid"></div>
                         </div>
 
+                        <!-- Price Prediction Mini Widget -->
+                        <div class="bento-card bento-prediction-mini" onclick="navigate('prediction')"
+                            style="--delay:9;cursor:pointer">
+                            <div class="stat-top"><span class="stat-label">📈 Price Forecast</span><span
+                                    class="stat-icon bg-orange">🔮</span></div>
+                            <div id="predictionMiniContent">
+                                <p class="stat-val" id="predMiniCrop" style="font-size:1rem;margin:0.5rem 0 0.25rem">
+                                    Wheat</p>
+                                <p class="stat-val" id="predMiniPrice" style="font-size:1.5rem">--<span
+                                        class="stat-unit">/qt</span></p>
+                                <p class="stat-delta" id="predMiniTrend">Loading forecast...</p>
+                                <div class="pred-mini-verdict" id="predMiniVerdict"
+                                    style="margin-top:0.5rem;padding:4px 10px;border-radius:8px;font-size:0.7rem;font-weight:700;display:inline-block">
+                                    --</div>
+                            </div>
+                        </div>
+
                         <!-- Activity Feed -->
-                        <div class="bento-card bento-feed" style="--delay:9">
+                        <div class="bento-card bento-feed" style="--delay:10">
                             <p class="bento-section-head" data-i18n="activity_feed">📝 Activity Feed</p>
                             <div id="activityFeed" class="activity-feed">
                                 <div class="feed-item feed-system"><span class="feed-dot dot-green"></span>
@@ -367,6 +388,166 @@
                     </div>
                 </div>
             </section>
+
+            <!-- PAGE: Price Prediction -->
+            <section id="page-prediction" class="page">
+                <div class="page-pad">
+                    <div class="pred-header">
+                        <div>
+                            <h2 class="page-title">📈 Crop Price Prediction</h2>
+                            <p class="page-sub">AI-powered price forecast and farmer advisory <span id="predSourceBadge"
+                                    class="pred-source-badge"></span> <span id="predLastUpdated"
+                                    style="font-size:0.75rem;opacity:0.6;margin-left:8px"></span></p>
+                        </div>
+                        <div class="pred-group-controls" style="display:flex;gap:12px;align-items:flex-end">
+                            <div class="pred-control-item">
+                                <label for="predStateSelect"
+                                    style="display:block;font-size:0.75rem;margin-bottom:4px;opacity:0.8">State:</label>
+                                <select id="predStateSelect"
+                                    onchange="loadPricePrediction(document.getElementById('predCropSelect').value)">
+                                    <option value="">National Average</option>
+                                    <option value="Maharashtra">Maharashtra</option>
+                                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                    <option value="Punjab">Punjab</option>
+                                    <option value="Rajasthan">Rajasthan</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                    <option value="Gujarat">Gujarat</option>
+                                    <option value="Haryana">Haryana</option>
+                                    <option value="Karnataka">Karnataka</option>
+                                    <option value="West Bengal">West Bengal</option>
+                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                </select>
+                            </div>
+                            <div class="pred-control-item">
+                                <label for="predCropSelect"
+                                    style="display:block;font-size:0.75rem;margin-bottom:4px;opacity:0.8">Crop:</label>
+                                <select id="predCropSelect" onchange="loadPricePrediction(this.value)">
+                                    <option value="Wheat">🌾 Wheat</option>
+                                    <option value="Rice">🍚 Rice</option>
+                                    <option value="Mustard">🌻 Mustard</option>
+                                    <option value="Cotton">🏵️ Cotton</option>
+                                    <option value="Soyabean">🫘 Soyabean</option>
+                                    <option value="Maize">🌽 Maize</option>
+                                    <option value="Gram">🫘 Gram</option>
+                                    <option value="Onion">🧅 Onion</option>
+                                    <option value="Tomato">🍅 Tomato</option>
+                                    <option value="Potato">🥔 Potato</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metrics Row -->
+                    <div class="pred-metrics" id="predMetrics">
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">Current Price</span>
+                            <span class="pred-metric-val" id="predCurrentPrice">--</span>
+                            <span class="pred-metric-unit">per quintal</span>
+                        </div>
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">MSP (Govt.)</span>
+                            <span class="pred-metric-val" id="predMSP">--</span>
+                            <span class="pred-metric-unit">guaranteed</span>
+                        </div>
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">30-Day Forecast</span>
+                            <span class="pred-metric-val" id="predForecast">--</span>
+                            <span class="pred-metric-unit" id="predForecastChange">--</span>
+                        </div>
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">Trend</span>
+                            <span class="pred-metric-val" id="predTrend">--</span>
+                            <span class="pred-metric-unit" id="predConfidence">--</span>
+                            <div id="predSourceMetric" style="font-size: 0.65rem; margin-top: 0.4rem; opacity: 0.7;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prediction Chart -->
+                    <div class="pred-chart-wrap">
+                        <h3 class="section-title">Price History and Forecast</h3>
+                        <div class="pred-chart-container">
+                            <canvas id="predictionChart"></canvas>
+                        </div>
+                        <div class="pred-chart-legend">
+                            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>
+                                Historical Price</span>
+                            <span class="legend-item"><span class="legend-dot"
+                                    style="background:#22c55e;border:2px dashed #22c55e;background:transparent"></span>
+                                Predicted Price</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> MSP
+                                Reference</span>
+                            <span class="legend-item"><span class="legend-dot"
+                                    style="background:rgba(34,197,94,0.15);border:1px solid #22c55e"></span> Confidence
+                                Band</span>
+                        </div>
+                    </div>
+
+                    <!-- How It Works / Methodology Panel -->
+                    <div class="pred-methodology" id="predMethodology">
+                        <h3 class="section-title">🧠 How Prediction Works</h3>
+                        <div class="pred-method-grid">
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">📊</div>
+                                <div class="pred-method-title">Data Source</div>
+                                <div class="pred-method-desc" id="methodDataSource">Loading...</div>
+                            </div>
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">🤖</div>
+                                <div class="pred-method-title">AI Model</div>
+                                <div class="pred-method-desc" id="methodModel">Weighted Moving Avg + Linear Regression
+                                </div>
+                            </div>
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">🎯</div>
+                                <div class="pred-method-title">Accuracy Range</div>
+                                <div class="pred-method-desc" id="methodAccuracy">Best for 7-14 day forecasts</div>
+                            </div>
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">🔄</div>
+                                <div class="pred-method-title">Data Points</div>
+                                <div class="pred-method-desc" id="methodDataPoints">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Feature Tags -->
+                        <div class="pred-features-row" id="predFeaturesRow">
+                            <span class="pred-feature-tag">WMA-30</span>
+                            <span class="pred-feature-tag">Trend Slope</span>
+                            <span class="pred-feature-tag">Seasonal Pattern</span>
+                            <span class="pred-feature-tag">MSP Reference</span>
+                            <span class="pred-feature-tag">Confidence Band</span>
+                            <span class="pred-feature-tag">Interpolation</span>
+                        </div>
+
+                        <!-- Accuracy Note -->
+                        <div class="pred-accuracy-note" id="predAccuracyNote">
+                            <strong>📝 Note:</strong> Predictions are based on real mandi data from data.gov.in.
+                            Predictions use trend extrapolation — most reliable for 7-14 days, less accurate beyond 30
+                            days.
+                            Agriculture prices depend on rainfall, policy changes, and local supply — no model can claim
+                            high certainty.
+                            Always combine with local market knowledge and consult your Agriculture Officer.
+                        </div>
+                    </div>
+
+                    <!-- Advisory Section -->
+                    <div class="pred-advisory-section">
+                        <h3 class="section-title">Farmer Advisory — All Crops <span id="advisoryLocationBadge"
+                                style="font-size:0.75rem;font-weight:400;opacity:0.6;margin-left:8px"></span></h3>
+                        <p class="page-sub" style="margin-bottom:1rem">Buy/sell/hold guidance based on Agmarknet mandi
+                            data and MSP 2025-26 (CCEA, Govt. of India)</p>
+                        <div class="pred-advisory-grid" id="advisoryGrid">
+                            <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                            <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                            <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                        </div>
+                        <p class="pred-disclaimer">MSP values are CCEA-approved 2025-26 figures (pib.gov.in). Price
+                            forecasts are model estimates — not published by any government authority. Consult your
+                            nearest APMC or Agriculture Officer before selling.</p>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -405,6 +586,13 @@
                 <button class="loc-btn" onclick="selectLocation('Chennai','13.0827','80.2707')">Chennai</button>
                 <button class="loc-btn" onclick="selectLocation('Hyderabad','17.3850','78.4867')">Hyderabad</button>
                 <button class="loc-btn" onclick="selectLocation('Kochi','9.9312','76.2673')">Kochi</button>
+                <!-- Andhra Pradesh -->
+                <div class="loc-region">Andhra Pradesh</div>
+                <button class="loc-btn" onclick="selectLocation('Vijayawada','16.5062','80.6480')">Vijayawada</button>
+                <button class="loc-btn"
+                    onclick="selectLocation('Visakhapatnam','17.6868','83.2185')">Visakhapatnam</button>
+                <button class="loc-btn" onclick="selectLocation('Guntur','16.3067','80.4365')">Guntur</button>
+                <button class="loc-btn" onclick="selectLocation('Nellore','14.4426','79.9865')">Nellore</button>
                 <!-- East India -->
                 <div class="loc-region">East India</div>
                 <button class="loc-btn" onclick="selectLocation('Kolkata','22.5726','88.3639')">Kolkata</button>
@@ -424,6 +612,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="/dashboard/app.js"></script>
 </body>
 

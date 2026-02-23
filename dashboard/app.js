@@ -250,6 +250,10 @@ const TRANSLATIONS = {
     }
 };
 
+function getCurrentLang() {
+    return document.getElementById('langSelect')?.value || localStorage.getItem('krishi_lang') || 'en';
+}
+
 function applyLanguage(lang) {
     const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
     // Update all elements with data-i18n attribute
@@ -264,6 +268,26 @@ function applyLanguage(lang) {
     });
     // Set HTML lang attribute
     document.documentElement.lang = lang;
+
+    // Re-render all dynamic content with new language
+    initHeroBanner();
+    loadCropCalendar();
+    loadPopularQuestions();
+    loadAIDailyTip();
+
+    // Reset lazy-loaded sub-page flags so they re-fetch with correct language
+    if (typeof marketLoaded !== 'undefined') { marketLoaded = false; }
+    if (typeof cropsLoaded !== 'undefined') { cropsLoaded = false; }
+    if (typeof pestsLoaded !== 'undefined') { pestsLoaded = false; }
+
+    // If sub-pages are currently visible, reload them immediately
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+        const pageId = activePage.id;
+        if (pageId === 'page-crops') loadCropGuide();
+        if (pageId === 'page-pests') loadPestSolutions();
+        if (pageId === 'page-market') loadMarketPrices();
+    }
 }
 function wmoIcon(code) { return (WMO[code] || '🌤️ Unknown').split(' ')[0]; }
 function wmoDesc(code) { return (WMO[code] || 'Unknown').split(' ').slice(1).join(' '); }
@@ -275,39 +299,47 @@ let userLocation = JSON.parse(localStorage.getItem('krishimind_location') || 'nu
 
 // All known cities with coords for nearest-match
 const KNOWN_CITIES = [
-    { name: 'Amravati', lat: 20.9320, lon: 77.7523 },
-    { name: 'Nagpur', lat: 21.1458, lon: 79.0882 },
-    { name: 'Mumbai', lat: 19.0760, lon: 72.8777 },
-    { name: 'Pune', lat: 18.5204, lon: 73.8567 },
-    { name: 'Nashik', lat: 19.9975, lon: 73.7898 },
-    { name: 'Aurangabad', lat: 19.8762, lon: 75.3433 },
-    { name: 'Kolhapur', lat: 16.7050, lon: 74.2433 },
-    { name: 'Solapur', lat: 17.6599, lon: 75.9064 },
-    { name: 'Delhi', lat: 28.6139, lon: 77.2090 },
-    { name: 'Lucknow', lat: 26.8467, lon: 80.9462 },
-    { name: 'Jaipur', lat: 26.9124, lon: 75.7873 },
-    { name: 'Chandigarh', lat: 30.7333, lon: 76.7794 },
-    { name: 'Varanasi', lat: 25.3176, lon: 82.9739 },
-    { name: 'Bhopal', lat: 23.2599, lon: 77.4126 },
-    { name: 'Indore', lat: 22.7196, lon: 75.8577 },
-    { name: 'Agra', lat: 27.1767, lon: 78.0081 },
-    { name: 'Bangalore', lat: 12.9716, lon: 77.5946 },
-    { name: 'Chennai', lat: 13.0827, lon: 80.2707 },
-    { name: 'Hyderabad', lat: 17.3850, lon: 78.4867 },
-    { name: 'Kochi', lat: 9.9312, lon: 76.2673 },
-    { name: 'Kolkata', lat: 22.5726, lon: 88.3639 },
-    { name: 'Patna', lat: 25.6093, lon: 85.1376 },
-    { name: 'Ranchi', lat: 23.3441, lon: 85.3096 },
-    { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714 },
-    { name: 'Rajkot', lat: 22.3039, lon: 70.8022 },
-    { name: 'Raipur', lat: 21.2514, lon: 81.6296 },
-    { name: 'Ludhiana', lat: 30.9010, lon: 75.8573 },
-    { name: 'Karnal', lat: 29.6857, lon: 76.9905 },
-    { name: 'Amritsar', lat: 31.6340, lon: 74.8723 },
+    { name: 'Amravati', lat: 20.9320, lon: 77.7523, state: 'Maharashtra' },
+    { name: 'Nagpur', lat: 21.1458, lon: 79.0882, state: 'Maharashtra' },
+    { name: 'Mumbai', lat: 19.0760, lon: 72.8777, state: 'Maharashtra' },
+    { name: 'Pune', lat: 18.5204, lon: 73.8567, state: 'Maharashtra' },
+    { name: 'Nashik', lat: 19.9975, lon: 73.7898, state: 'Maharashtra' },
+    { name: 'Aurangabad', lat: 19.8762, lon: 75.3433, state: 'Maharashtra' },
+    { name: 'Kolhapur', lat: 16.7050, lon: 74.2433, state: 'Maharashtra' },
+    { name: 'Solapur', lat: 17.6599, lon: 75.9064, state: 'Maharashtra' },
+    { name: 'Delhi', lat: 28.6139, lon: 77.2090, state: 'Delhi' },
+    { name: 'Lucknow', lat: 26.8467, lon: 80.9462, state: 'Uttar Pradesh' },
+    { name: 'Jaipur', lat: 26.9124, lon: 75.7873, state: 'Rajasthan' },
+    { name: 'Chandigarh', lat: 30.7333, lon: 76.7794, state: 'Punjab' },
+    { name: 'Varanasi', lat: 25.3176, lon: 82.9739, state: 'Uttar Pradesh' },
+    { name: 'Bhopal', lat: 23.2599, lon: 77.4126, state: 'Madhya Pradesh' },
+    { name: 'Indore', lat: 22.7196, lon: 75.8577, state: 'Madhya Pradesh' },
+    { name: 'Agra', lat: 27.1767, lon: 78.0081, state: 'Uttar Pradesh' },
+    { name: 'Bangalore', lat: 12.9716, lon: 77.5946, state: 'Karnataka' },
+    { name: 'Chennai', lat: 13.0827, lon: 80.2707, state: 'Tamil Nadu' },
+    { name: 'Hyderabad', lat: 17.3850, lon: 78.4867, state: 'Telangana' },
+    { name: 'Kochi', lat: 9.9312, lon: 76.2673, state: 'Kerala' },
+    { name: 'Kolkata', lat: 22.5726, lon: 88.3639, state: 'West Bengal' },
+    { name: 'Patna', lat: 25.6093, lon: 85.1376, state: 'Bihar' },
+    { name: 'Ranchi', lat: 23.3441, lon: 85.3096, state: 'Jharkhand' },
+    { name: 'Ahmedabad', lat: 23.0225, lon: 72.5714, state: 'Gujarat' },
+    { name: 'Rajkot', lat: 22.3039, lon: 70.8022, state: 'Gujarat' },
+    { name: 'Raipur', lat: 21.2514, lon: 81.6296, state: 'Chhattisgarh' },
+    { name: 'Ludhiana', lat: 30.9010, lon: 75.8573, state: 'Punjab' },
+    { name: 'Karnal', lat: 29.6857, lon: 76.9905, state: 'Haryana' },
+    { name: 'Amritsar', lat: 31.6340, lon: 74.8723, state: 'Punjab' },
+    // Andhra Pradesh
+    { name: 'Vijayawada', lat: 16.5062, lon: 80.6480, state: 'Andhra Pradesh' },
+    { name: 'Visakhapatnam', lat: 17.6868, lon: 83.2185, state: 'Andhra Pradesh' },
+    { name: 'Guntur', lat: 16.3067, lon: 80.4365, state: 'Andhra Pradesh' },
+    { name: 'Nellore', lat: 14.4426, lon: 79.9865, state: 'Andhra Pradesh' },
 ];
 
 function getLocationName() {
     return userLocation ? userLocation.name : 'India';
+}
+function getLocationState() {
+    return userLocation ? (userLocation.state || '') : '';
 }
 function getLocationCoords() {
     return userLocation ? { lat: userLocation.lat, lon: userLocation.lon } : { lat: '20.5937', lon: '78.9629' };
@@ -361,27 +393,29 @@ async function autoDetectLocation() {
         // Use geocoded name if available, otherwise nearest city name
         const finalName = cityName || nearest.name;
 
-        setLocationSilently(finalName, String(lat), String(lon));
+        setLocationSilently(finalName, String(lat), String(lon), nearest.state || '');
         addFeedItem(`📍 Location auto-detected: ${finalName}`, 'dot-blue');
 
     } catch (err) {
         // GPS denied or failed — default to Delhi silently
         console.log('Geolocation unavailable:', err.message);
         const fallback = KNOWN_CITIES.find(c => c.name === 'Delhi') || KNOWN_CITIES[0];
-        setLocationSilently(fallback.name, String(fallback.lat), String(fallback.lon));
+        setLocationSilently(fallback.name, String(fallback.lat), String(fallback.lon), fallback.state || '');
         addFeedItem(`📍 Using default location: ${fallback.name}`, 'dot-blue');
     }
 }
 
 // Set location without opening/closing the modal
-function setLocationSilently(name, lat, lon) {
-    userLocation = { name, lat, lon };
+function setLocationSilently(name, lat, lon, state) {
+    userLocation = { name, lat, lon, state: state || '' };
     localStorage.setItem('krishimind_location', JSON.stringify(userLocation));
     updateLocationUI();
     // Reload widgets with new location
     loadWeather();
     loadAIDailyTip();
     loadMarketTicker();
+    loadPricePrediction(document.getElementById('predCropSelect')?.value || 'Wheat');
+    loadPriceAdvisory();
     initHeroBanner();
 }
 
@@ -398,16 +432,19 @@ function showLocationPicker() {
 }
 
 function selectLocation(name, lat, lon) {
-    userLocation = { name, lat, lon };
+    const cityData = KNOWN_CITIES.find(c => c.name === name) || {};
+    userLocation = { name, lat, lon, state: cityData.state || '' };
     localStorage.setItem('krishimind_location', JSON.stringify(userLocation));
     document.getElementById('locationModal').classList.remove('active');
     updateLocationUI();
-    // Reload everything with new location
+    // Reload all location-dependent data
     loadWeather();
     loadAIDailyTip();
     loadMarketTicker();
+    loadPricePrediction(document.getElementById('predCropSelect')?.value || 'Wheat');
+    loadPriceAdvisory();
     initHeroBanner();
-    addFeedItem(`📍 Location changed to ${name}`, 'dot-blue');
+    addFeedItem(`📍 Location changed to ${name} (${cityData.state || 'India'})`, 'dot-blue');
 }
 
 function filterLocations(q) {
@@ -429,12 +466,19 @@ function filterLocations(q) {
 function updateLocationUI() {
     const badge = document.getElementById('locationBadgeText');
     if (badge) badge.textContent = userLocation ? userLocation.name : 'Detecting...';
+
     // Sync the weather page dropdown if it exists
     const sel = document.getElementById('weatherCity');
     if (sel && userLocation) {
         for (let opt of sel.options) {
             if (opt.text === userLocation.name) { sel.value = opt.value; break; }
         }
+    }
+
+    // Sync the Prediction page State dropdown if it exists
+    const stateSel = document.getElementById('predStateSelect');
+    if (stateSel && userLocation && userLocation.state) {
+        stateSel.value = userLocation.state;
     }
 }
 
@@ -508,22 +552,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── HERO BANNER ─────────────────────────────────────────
 function initHeroBanner() {
+    const lang = getCurrentLang();
     const h = new Date().getHours();
-    const greetings = h < 5 ? 'Good Night 🌙' : h < 12 ? 'Good Morning ☀️' : h < 17 ? 'Good Afternoon 🌤️' : 'Good Evening 🌇';
-    document.getElementById('heroGreeting').textContent = greetings;
+
+    const greetingTexts = {
+        en: h < 5 ? 'Good Night 🌙' : h < 12 ? 'Good Morning ☀️' : h < 17 ? 'Good Afternoon 🌤️' : 'Good Evening 🌇',
+        hi: h < 5 ? 'शुभ रात्रि 🌙' : h < 12 ? 'सुप्रभात ☀️' : h < 17 ? 'शुभ दोपहर 🌤️' : 'शुभ संध्या 🌇',
+        te: h < 5 ? 'శుభ రాత్రి 🌙' : h < 12 ? 'శుభోదయం ☀️' : h < 17 ? 'శుభ మధ్యాహ్నం 🌤️' : 'శుభ సాయంత్రం 🌇',
+    };
+    document.getElementById('heroGreeting').textContent = greetingTexts[lang] || greetingTexts.en;
 
     const loc = getLocationName();
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const localeMap = { en: 'en-IN', hi: 'hi-IN', te: 'te-IN' };
+    const locale = localeMap[lang] || 'en-IN';
+    const dateStr = now.toLocaleDateString(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     document.getElementById('heroDate').innerHTML = `<div>📍 ${loc}</div><div>${dateStr}</div><div style="font-weight:700;font-size:1.1em">${timeStr}</div>`;
 
-    // Rabi/Kharif season
+    // Rabi/Kharif season — multilingual
     const month = now.getMonth() + 1;
-    let season, subtext;
-    if (month >= 10 || month <= 3) { season = 'Rabi'; subtext = `📍 ${loc} • Rabi season — Wheat, Mustard, Barley growing`; }
-    else if (month >= 6 && month <= 9) { season = 'Kharif'; subtext = `📍 ${loc} • Kharif season — Rice, Maize, Cotton growing`; }
-    else { season = 'Zaid'; subtext = `📍 ${loc} • Zaid season — Watermelon, Cucumber, Moong growing`; }
+    let subtext;
+    const seasonTexts = {
+        en: {
+            rabi: `📍 ${loc} • Rabi season — Wheat, Mustard, Barley growing`,
+            kharif: `📍 ${loc} • Kharif season — Rice, Maize, Cotton growing`,
+            zaid: `📍 ${loc} • Zaid season — Watermelon, Cucumber, Moong growing`,
+        },
+        hi: {
+            rabi: `📍 ${loc} • रबी मौसम — गेहूं, सरसों, जौ की खेती`,
+            kharif: `📍 ${loc} • खरीफ मौसम — चावल, मक्का, कपास की खेती`,
+            zaid: `📍 ${loc} • जायद मौसम — तरबूज, खीरा, मूंग की खेती`,
+        },
+        te: {
+            rabi: `📍 ${loc} • రబీ కాలం — గోధుమ, ఆవాలు, బార్లీ పెరుగుతున్నాయి`,
+            kharif: `📍 ${loc} • ఖరీఫ్ కాలం — వరి, మొక్కజొన్న, పత్తి పెరుగుతున్నాయి`,
+            zaid: `📍 ${loc} • జైద్ కాలం — పుచ్చకాయ, దోసకాయ, పెసలు పెరుగుతున్నాయి`,
+        }
+    };
+    const st = seasonTexts[lang] || seasonTexts.en;
+    if (month >= 10 || month <= 3) { subtext = st.rabi; }
+    else if (month >= 6 && month <= 9) { subtext = st.kharif; }
+    else { subtext = st.zaid; }
     document.getElementById('heroSub').textContent = subtext;
 }
 
@@ -849,15 +919,21 @@ function drawWheatSparkline(priceHistory) {
 // ── MARKET TICKER ───────────────────────────────────────
 async function loadMarketTicker() {
     try {
-        const r = await fetch(API + '/market-prices');
+        const state = getLocationState();
+        const stateParam = state ? `?state=${encodeURIComponent(state)}` : '';
+        const r = await fetch(API + '/market-prices' + stateParam);
         const d = await r.json();
         const scroll = document.getElementById('tickerScroll');
-        const liveBadge = d.live ? '<span style="font-size:0.55rem;color:#059669;font-weight:700;margin-left:4px">🟢 LIVE</span>' : '';
+        const locationLabel = d.location || 'India';
+        const isOffline = d.offline || false;
+        const dateBadge = isOffline
+            ? '<span style="font-size:0.55rem;color:#f59e0b;font-weight:700;margin-left:4px">⚠️ Offline</span>'
+            : `<span style="font-size:0.55rem;color:#6b7280;margin-left:4px">📅 Daily·${locationLabel}</span>`;
         scroll.innerHTML = d.prices.slice(0, 6).map(p => `
-            <div class="ticker-chip" onclick="navigate('market')" title="${p.mandi} | ${p.source}">
+            <div class="ticker-chip" onclick="navigate('market')" title="${p.mandi || 'N/A'} | ${p.source}">
                 <span class="tc-icon">${p.icon}</span>
                 <div class="tc-info">
-                    <p class="tc-name">${p.crop}${liveBadge}</p>
+                    <p class="tc-name">${p.crop}${dateBadge}</p>
                     <p class="tc-price">₹${p.price.toLocaleString('en-IN')}</p>
                 </div>
                 <span class="tc-change ${p.change >= 0 ? 'up' : 'down'}">${p.change >= 0 ? '↑' : '↓'}${Math.abs(p.change)}%</span>
@@ -886,34 +962,128 @@ async function loadMarketTicker() {
 // ── CROP CALENDAR ───────────────────────────────────────
 function loadCropCalendar() {
     const month = new Date().getMonth() + 1; // 1-12
+    const lang = getCurrentLang();
     let events, seasonName;
 
-    if (month >= 10 || month <= 3) {
-        seasonName = 'Rabi Season (Oct–Mar)';
-        events = [
-            { month: 'Oct', task: 'Land preparation & sowing', status: month >= 10 ? 'done' : 'pending' },
-            { month: 'Nov', task: 'Wheat sowing, first irrigation', status: month >= 11 || month <= 3 ? 'done' : 'pending' },
-            { month: 'Dec', task: 'Weed control & 2nd irrigation', status: month === 12 || month <= 3 ? (month >= 12 ? 'active' : 'done') : 'pending' },
-            { month: 'Jan', task: 'Top dressing fertilizer', status: month >= 1 && month <= 3 ? (month === 1 ? 'active' : 'done') : 'pending' },
-            { month: 'Feb', task: '3rd irrigation, pest monitoring', status: month >= 2 && month <= 3 ? (month === 2 ? 'active' : 'done') : 'pending' },
-            { month: 'Mar', task: 'Harvest preparation', status: month === 3 ? 'active' : 'pending' },
-        ];
-    } else if (month >= 6 && month <= 9) {
-        seasonName = 'Kharif Season (Jun–Sep)';
-        events = [
-            { month: 'Jun', task: 'Monsoon sowing — Rice, Maize', status: month >= 6 ? 'done' : 'pending' },
-            { month: 'Jul', task: 'Transplanting & weed control', status: month >= 7 ? (month === 7 ? 'active' : 'done') : 'pending' },
-            { month: 'Aug', task: 'Fertilizer application', status: month >= 8 ? (month === 8 ? 'active' : 'done') : 'pending' },
-            { month: 'Sep', task: 'Pest control & pre-harvest', status: month === 9 ? 'active' : 'pending' },
-        ];
-    } else {
-        seasonName = 'Zaid Season (Apr–Jun)';
-        events = [
-            { month: 'Apr', task: 'Summer sowing — Watermelon, Moong', status: month === 4 ? 'active' : month > 4 ? 'done' : 'pending' },
-            { month: 'May', task: 'Irrigation management', status: month === 5 ? 'active' : month > 5 ? 'done' : 'pending' },
-            { month: 'Jun', task: 'Harvesting zaid crops', status: month === 6 ? 'active' : 'pending' },
-        ];
-    }
+    const calData = {
+        en: {
+            rabi: {
+                name: 'Rabi Season (Oct–Mar)',
+                events: [
+                    { month: 'Oct', task: 'Land preparation & sowing' },
+                    { month: 'Nov', task: 'Wheat sowing, first irrigation' },
+                    { month: 'Dec', task: 'Weed control & 2nd irrigation' },
+                    { month: 'Jan', task: 'Top dressing fertilizer' },
+                    { month: 'Feb', task: '3rd irrigation, pest monitoring' },
+                    { month: 'Mar', task: 'Harvest preparation' },
+                ]
+            },
+            kharif: {
+                name: 'Kharif Season (Jun–Sep)',
+                events: [
+                    { month: 'Jun', task: 'Monsoon sowing — Rice, Maize' },
+                    { month: 'Jul', task: 'Transplanting & weed control' },
+                    { month: 'Aug', task: 'Fertilizer application' },
+                    { month: 'Sep', task: 'Pest control & pre-harvest' },
+                ]
+            },
+            zaid: {
+                name: 'Zaid Season (Apr–Jun)',
+                events: [
+                    { month: 'Apr', task: 'Summer sowing — Watermelon, Moong' },
+                    { month: 'May', task: 'Irrigation management' },
+                    { month: 'Jun', task: 'Harvesting zaid crops' },
+                ]
+            }
+        },
+        hi: {
+            rabi: {
+                name: 'रबी मौसम (अक्टू–मार्च)',
+                events: [
+                    { month: 'अक्टू', task: 'भूमि तैयारी और बुवाई' },
+                    { month: 'नवं', task: 'गेहूं बुवाई, पहली सिंचाई' },
+                    { month: 'दिसं', task: 'खरपतवार नियंत्रण और दूसरी सिंचाई' },
+                    { month: 'जन', task: 'टॉप ड्रेसिंग उर्वरक' },
+                    { month: 'फर', task: 'तीसरी सिंचाई, कीट निगरानी' },
+                    { month: 'मार्च', task: 'कटाई की तैयारी' },
+                ]
+            },
+            kharif: {
+                name: 'खरीफ मौसम (जून–सितं)',
+                events: [
+                    { month: 'जून', task: 'मानसून बुवाई — चावल, मक्का' },
+                    { month: 'जुला', task: 'रोपाई और खरपतवार नियंत्रण' },
+                    { month: 'अग', task: 'उर्वरक डालना' },
+                    { month: 'सितं', task: 'कीट नियंत्रण और पूर्व-कटाई' },
+                ]
+            },
+            zaid: {
+                name: 'जायद मौसम (अप्रैल–जून)',
+                events: [
+                    { month: 'अप्रैल', task: 'ग्रीष्म बुवाई — तरबूज, मूंग' },
+                    { month: 'मई', task: 'सिंचाई प्रबंधन' },
+                    { month: 'जून', task: 'जायद फसल कटाई' },
+                ]
+            }
+        },
+        te: {
+            rabi: {
+                name: 'రబీ కాలం (అక్టో–మార్చి)',
+                events: [
+                    { month: 'అక్టో', task: 'భూమి తయారీ & విత్తడం' },
+                    { month: 'నవం', task: 'గోధుమ విత్తడం, మొదటి నీటి తడి' },
+                    { month: 'డిసెం', task: 'కలుపు నియంత్రణ & రెండో నీటి తడి' },
+                    { month: 'జన', task: 'టాప్ డ్రెస్సింగ్ ఎరువు' },
+                    { month: 'ఫిబ్ర', task: 'మూడో నీటి తడి, పురుగుల పరీక్ష' },
+                    { month: 'మార్చి', task: 'కోత సిద్ధం' },
+                ]
+            },
+            kharif: {
+                name: 'ఖరీఫ్ కాలం (జూన్–సెప్టెం)',
+                events: [
+                    { month: 'జూన్', task: 'వర్షాకాల విత్తనం — వరి, మొక్కజొన్న' },
+                    { month: 'జులై', task: 'నాట్లు & కలుపు నియంత్రణ' },
+                    { month: 'ఆగ', task: 'ఎరువు వేయడం' },
+                    { month: 'సెప్టెం', task: 'పురుగుల నియంత్రణ & ముందు-కోత' },
+                ]
+            },
+            zaid: {
+                name: 'జైద్ కాలం (ఏప్రిల్–జూన్)',
+                events: [
+                    { month: 'ఏప్రిల్', task: 'వేసవి విత్తనం — పుచ్చకాయ, పెసలు' },
+                    { month: 'మే', task: 'నీటి తడి నిర్వహణ' },
+                    { month: 'జూన్', task: 'జైద్ పంటల కోత' },
+                ]
+            }
+        }
+    };
+
+    const cd = calData[lang] || calData.en;
+    let seasonKey;
+    if (month >= 10 || month <= 3) seasonKey = 'rabi';
+    else if (month >= 6 && month <= 9) seasonKey = 'kharif';
+    else seasonKey = 'zaid';
+
+    const season = cd[seasonKey];
+    seasonName = season.name;
+
+    // Add status based on current month
+    const monthNums = { rabi: [10, 11, 12, 1, 2, 3], kharif: [6, 7, 8, 9], zaid: [4, 5, 6] };
+    const nums = monthNums[seasonKey];
+    events = season.events.map((e, i) => {
+        const eventMonth = nums[i];
+        let status = 'pending';
+        if (seasonKey === 'rabi') {
+            const adjustedCurrent = month < 6 ? month + 12 : month;
+            const adjustedEvent = eventMonth < 6 ? eventMonth + 12 : eventMonth;
+            if (adjustedCurrent > adjustedEvent) status = 'done';
+            else if (adjustedCurrent === adjustedEvent) status = 'active';
+        } else {
+            if (month > eventMonth) status = 'done';
+            else if (month === eventMonth) status = 'active';
+        }
+        return { ...e, status };
+    });
 
     document.getElementById('calSeasonName').textContent = seasonName;
     document.getElementById('cropCalendar').innerHTML = events.map(e => `
@@ -980,7 +1150,8 @@ async function loadAIDailyTip() {
 // ── POPULAR QUESTIONS ───────────────────────────────────
 async function loadPopularQuestions() {
     try {
-        const r = await fetch(API + '/popular');
+        const lang = getCurrentLang();
+        const r = await fetch(API + '/popular?lang=' + lang);
         const d = await r.json();
 
         // Right panel (chat page)
@@ -1051,7 +1222,10 @@ async function loadMarketPrices() {
 // ── CROP GUIDE PAGE ─────────────────────────────────────
 async function loadCropGuide() {
     try {
-        const r = await fetch(API + '/crop-guide');
+        const lang = getCurrentLang();
+        const askAILabel = { en: '🤖 Ask AI about', hi: '🤖 AI से पूछें', te: '🤖 AI ని అడగండి' };
+        const askLabel = askAILabel[lang] || askAILabel.en;
+        const r = await fetch(API + '/crop-guide?lang=' + lang);
         const d = await r.json();
         document.getElementById('cropsGrid').innerHTML = d.crops.map((c, i) => `
             <div class="crop-card" style="animation-delay:${i * 0.06}s">
@@ -1069,7 +1243,7 @@ async function loadCropGuide() {
                 <ul class="cc-tips">${c.tips.map(t => `<li>${t}</li>`).join('')}</ul>
                 <button class="pop-chip" style="margin-top:0.75rem;justify-content:center;border-color:#bbf7d0"
                     onclick="navigate('chat');setTimeout(()=>askQuestion('Tell me more about growing ${c.name} in India'),300)">
-                    🤖 Ask AI about ${c.name}
+                    ${askLabel} ${c.name}
                 </button>
             </div>
         `).join('');
@@ -1081,13 +1255,15 @@ async function loadCropGuide() {
 // ── PEST SOLUTIONS PAGE ─────────────────────────────────
 async function loadPestSolutions() {
     try {
-        const r = await fetch(API + '/pest-solutions');
+        const lang = getCurrentLang();
+        const r = await fetch(API + '/pest-solutions?lang=' + lang);
         const d = await r.json();
+        const labels = d.labels || { affects: 'Affects', ask_ai: '🤖 Ask AI about' };
         document.getElementById('pestsGrid').innerHTML = d.pests.map((p, i) => `
             <div class="pest-card" style="animation-delay:${i * 0.06}s">
                 <div class="pc-header">
                     <span style="font-size:1.5rem">${p.icon}</span>
-                    <div style="flex:1"><p class="pc-name">${p.name}</p><p class="pc-crops">Affects: ${p.crops.join(', ')}</p></div>
+                    <div style="flex:1"><p class="pc-name">${p.name}</p><p class="pc-crops">${labels.affects}: ${p.crops.join(', ')}</p></div>
                     <span class="pc-severity sev-${p.severity}">${p.severity}</span>
                 </div>
                 <div class="pc-symptoms">⚠️ ${p.symptoms}</div>
@@ -1096,7 +1272,7 @@ async function loadPestSolutions() {
         ).join('')}</ul>
                 <button class="pop-chip" style="margin-top:0.75rem;justify-content:center;border-color:#fde68a"
                     onclick="navigate('chat');setTimeout(()=>askQuestion('How to control ${p.name} in my crop?'),300)">
-                    🤖 Ask AI about ${p.name}
+                    ${labels.ask_ai} ${p.name}
                 </button>
             </div>
         `).join('');
@@ -1280,15 +1456,369 @@ function updateHistory() {
     ).join('');
 }
 
+// ── PRICE PREDICTION & ADVISORY ─────────────────────────
+let predictionChart = null;
+
+function loadPricePrediction(crop = 'Wheat') {
+    const stateSelect = document.getElementById('predStateSelect');
+    const state = stateSelect && stateSelect.value ? stateSelect.value : getLocationState();
+
+    // Synchronize UI dropdown if it's currently on "National" but we have a location
+    if (stateSelect && !stateSelect.value && state) {
+        stateSelect.value = state;
+    }
+
+    const stateParam = state ? `&state=${encodeURIComponent(state)}` : '';
+    const endpoint = `/api/price-prediction?crop=${encodeURIComponent(crop)}&days=30${stateParam}`;
+    fetch(endpoint)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { console.error('[Prediction]', data.error); return; }
+            renderPredictionMetrics(data);
+            renderPredictionChart(data);
+            addFeedItem(`Price prediction loaded for ${crop}${state ? ' (' + state + ')' : ''}`, 'dot-amber');
+        })
+        .catch(e => console.error('[Prediction] Fetch error:', e));
+}
+
+
+function renderPredictionMetrics(data) {
+    const el = (id) => document.getElementById(id);
+    el('predCurrentPrice').textContent = `₹${data.current_price.toLocaleString('en-IN')}`;
+    el('predMSP').textContent = data.msp ? `₹${data.msp.toLocaleString('en-IN')}` : 'N/A';
+    el('predForecast').textContent = `₹${data.predicted_price.toLocaleString('en-IN')}`;
+
+    const changePct = ((data.predicted_price - data.current_price) / data.current_price * 100).toFixed(1);
+    const changeEl = el('predForecastChange');
+    if (changePct > 0) {
+        changeEl.textContent = `↑ ${changePct}% in 30 days`;
+        changeEl.style.color = '#22c55e';
+    } else if (changePct < 0) {
+        changeEl.textContent = `↓ ${Math.abs(changePct)}% in 30 days`;
+        changeEl.style.color = '#ef4444';
+    } else {
+        changeEl.textContent = 'Stable';
+        changeEl.style.color = '#6b7280';
+    }
+
+    const trendIcons = { rising: '📈 Rising', falling: '📉 Falling', stable: '➡️ Stable' };
+    el('predTrend').textContent = trendIcons[data.trend] || data.trend;
+    // Replace misleading % confidence with honest label
+    const confEl = el('predConfidence');
+    if (confEl) {
+        confEl.textContent = '±~15% estimate';
+        confEl.title = 'Agricultural price models cannot reliably claim high confidence. This is a trend estimate, not a guarantee.';
+        confEl.style.color = '#d97706';
+    }
+
+    // Update advisory location badge
+    const advBadge = document.getElementById('advisoryLocationBadge');
+    if (advBadge) {
+        const state = getLocationState();
+        advBadge.textContent = state ? `📍 ${state}` : '🇮🇳 India';
+    }
+
+    // Data Source Badge
+    const sourceBadge = el('predSourceBadge');
+    const sourceMetric = el('predSourceMetric');
+    if (sourceBadge && data.source) {
+        sourceBadge.textContent = data.source;
+        if (data.source.includes('Synthetic')) {
+            sourceBadge.classList.add('synthetic');
+        } else {
+            sourceBadge.classList.remove('synthetic');
+        }
+    }
+    if (sourceMetric) {
+        sourceMetric.textContent = `Source: ${data.source || 'AI Model'}`;
+    }
+
+    // Populate methodology panel
+    if (data.last_updated) {
+        const date = new Date(data.last_updated);
+        el('predLastUpdated').textContent = `📊 Updated: ${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+        el('predLastUpdated').textContent = '';
+    }
+
+    renderMethodologyPanel(data);
+}
+
+function renderMethodologyPanel(data) {
+    const el = (id) => document.getElementById(id);
+
+    // Data Source card
+    const dsEl = el('methodDataSource');
+    if (dsEl) {
+        if (data.source && data.source.includes('data.gov.in')) {
+            dsEl.textContent = '🟢 Government Mandi (Real)';
+            dsEl.style.color = '#16a34a';
+        } else {
+            dsEl.textContent = '🟡 Synthetic Model';
+            dsEl.style.color = '#d97706';
+        }
+    }
+
+    // AI Model card
+    const modelEl = el('methodModel');
+    if (modelEl && data.methodology) {
+        modelEl.textContent = data.methodology.model || 'WMA + Linear Regression';
+    }
+
+    // Accuracy card — honest description, no fake %
+    const accEl = el('methodAccuracy');
+    if (accEl) {
+        accEl.innerHTML = `<span style="color:#d97706;font-weight:700">±~15%</span> — Trend estimate only. 7-14 days most reliable. Policy shocks, rainfall, and supply cannot be modelled.`;
+    }
+
+    // Data Points card
+    const dpEl = el('methodDataPoints');
+    if (dpEl) {
+        const pts = data.data_points || (data.history ? data.history.length : 0);
+        dpEl.textContent = `${pts} historical records`;
+    }
+
+    // Dynamic feature tags based on methodology
+    const featRow = el('predFeaturesRow');
+    if (featRow && data.methodology && data.methodology.features) {
+        featRow.innerHTML = data.methodology.features.map(f => {
+            const shortName = f.split(' (')[0];
+            return `<span class="pred-feature-tag">${shortName}</span>`;
+        }).join('');
+    }
+
+    // Accuracy note
+    const noteEl = el('predAccuracyNote');
+    if (noteEl && data.methodology && data.methodology.accuracy_note) {
+        noteEl.innerHTML = `<strong>📝 Note:</strong> ${data.methodology.accuracy_note}`;
+    }
+}
+
+function renderPredictionChart(data) {
+    const ctx = document.getElementById('predictionChart');
+    if (!ctx) return;
+
+    if (predictionChart) {
+        predictionChart.destroy();
+        predictionChart = null;
+    }
+
+    const historyLabels = data.history.map(h => {
+        const d = new Date(h.date);
+        return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    });
+    const historyPrices = data.history.map(h => h.price);
+
+    const predLabels = data.prediction.map(p => {
+        const d = new Date(p.date);
+        return d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+    });
+    const predPrices = data.prediction.map(p => p.price);
+    const predUpper = data.prediction.map(p => p.upper);
+    const predLower = data.prediction.map(p => p.lower);
+
+    const allLabels = [...historyLabels, ...predLabels];
+    const gapFill = new Array(historyLabels.length).fill(null);
+    const histGapFill = new Array(predLabels.length).fill(null);
+
+    // Connect history to prediction with last history point
+    const connectedPred = [historyPrices[historyPrices.length - 1], ...predPrices];
+    const connectedPredLabelsGap = new Array(historyLabels.length - 1).fill(null);
+
+    const mspLine = data.msp ? new Array(allLabels.length).fill(data.msp) : null;
+
+    predictionChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: allLabels,
+            datasets: [
+                {
+                    label: 'Historical Price',
+                    data: [...historyPrices, ...histGapFill],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                },
+                {
+                    label: 'Predicted Price',
+                    data: [...connectedPredLabelsGap, ...connectedPred],
+                    borderColor: '#22c55e',
+                    borderDash: [6, 3],
+                    borderWidth: 2.5,
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                },
+                {
+                    label: 'Upper Band',
+                    data: [...gapFill, ...predUpper],
+                    borderColor: 'transparent',
+                    backgroundColor: 'rgba(34,197,94,0.1)',
+                    fill: '+1',
+                    tension: 0.3,
+                    pointRadius: 0,
+                },
+                {
+                    label: 'Lower Band',
+                    data: [...gapFill, ...predLower],
+                    borderColor: 'transparent',
+                    fill: false,
+                    tension: 0.3,
+                    pointRadius: 0,
+                },
+                ...(mspLine ? [{
+                    label: 'MSP',
+                    data: mspLine,
+                    borderColor: '#ef4444',
+                    borderWidth: 1.5,
+                    borderDash: [4, 4],
+                    fill: false,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                }] : [])
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    padding: 10,
+                    cornerRadius: 8,
+                    titleFont: { size: 12 },
+                    bodyFont: { size: 11 },
+                    callbacks: {
+                        label: function (ctx) {
+                            if (ctx.dataset.label === 'Upper Band' || ctx.dataset.label === 'Lower Band') return null;
+                            return `${ctx.dataset.label}: ₹${ctx.parsed.y?.toLocaleString('en-IN') || '--'}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        maxTicksLimit: 12,
+                        font: { size: 10 },
+                        color: '#9ca3af'
+                    }
+                },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.04)' },
+                    ticks: {
+                        font: { size: 10 },
+                        color: '#9ca3af',
+                        callback: v => `₹${v.toLocaleString('en-IN')}`
+                    }
+                }
+            }
+        }
+    });
+}
+
+function loadPriceAdvisory() {
+    const state = getLocationState();
+    const stateParam = state ? `?state=${encodeURIComponent(state)}` : '';
+    fetch('/api/price-advisory' + stateParam)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error || !data.advisories) return;
+            const grid = document.getElementById('advisoryGrid');
+            if (!grid) return;
+
+            const locationLabel = state || 'India';
+            grid.innerHTML = data.advisories.map(a => `
+                <div class="advisory-card verdict-${a.action_color}">
+                    <div class="advisory-card-header">
+                        <div class="advisory-crop-info">
+                            <span class="advisory-crop-icon">${a.icon}</span>
+                            <span class="advisory-crop-name">${a.crop}</span>
+                        </div>
+                        <span class="advisory-verdict-badge badge-${a.action_color}">${a.verdict}</span>
+                    </div>
+                    <p class="advisory-reason">${a.reason}</p>
+                    <div class="advisory-stats">
+                        <div class="advisory-stat">
+                            <span class="advisory-stat-label">Current</span>
+                            <span class="advisory-stat-val">₹${a.current_price.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="advisory-stat">
+                            <span class="advisory-stat-label">Forecast</span>
+                            <span class="advisory-stat-val">₹${a.predicted_price.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="advisory-stat">
+                            <span class="advisory-stat-label">MSP 2025-26</span>
+                            <span class="advisory-stat-val">${a.msp ? '₹' + a.msp.toLocaleString('en-IN') : 'None'}</span>
+                        </div>
+                        <div class="advisory-stat">
+                            <span class="advisory-stat-label">Data</span>
+                            <span class="advisory-stat-val" style="font-size:0.7rem">${(a.source && a.source.includes('data.gov.in')) ? '📊 Agmarknet' : '🔢 Model'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(e => console.error('[Advisory] Error:', e));
+}
+
+function loadPredictionMini() {
+    fetch('/api/price-advisory?crop=Wheat')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.advisories || !data.advisories.length) return;
+            const a = data.advisories[0];
+            const el = (id) => document.getElementById(id);
+            el('predMiniCrop').textContent = `${a.icon} ${a.crop}`;
+            el('predMiniPrice').innerHTML = `₹${a.current_price.toLocaleString('en-IN')}<span class="stat-unit">/qt</span>`;
+
+            const trendStr = a.trend === 'rising' ? `↑ ${a.change_pct}%` :
+                a.trend === 'falling' ? `↓ ${Math.abs(a.change_pct)}%` : `→ ${a.change_pct}%`;
+            const trendColor = a.trend === 'rising' ? '#22c55e' : a.trend === 'falling' ? '#ef4444' : '#6b7280';
+            const trendEl = el('predMiniTrend');
+            trendEl.textContent = `${trendStr} forecast`;
+            trendEl.className = `stat-delta ${a.trend === 'rising' ? 'up' : a.trend === 'falling' ? 'down' : ''}`;
+
+            const verdictEl = el('predMiniVerdict');
+            verdictEl.textContent = a.verdict;
+            const badgeColors = {
+                green: { bg: '#dcfce7', color: '#15803d' },
+                red: { bg: '#fee2e2', color: '#b91c1c' },
+                amber: { bg: '#fef3c7', color: '#92400e' },
+                blue: { bg: '#dbeafe', color: '#1e40af' }
+            };
+            const bc = badgeColors[a.action_color] || badgeColors.amber;
+            verdictEl.style.background = bc.bg;
+            verdictEl.style.color = bc.color;
+        })
+        .catch(e => console.error('[PredMini] Error:', e));
+}
+
+// Load mini widget on dashboard init (delay to not block critical loads)
+setTimeout(loadPredictionMini, 3000);
+
 // ── LAZY LOAD SUB-PAGES ─────────────────────────────────
 // Load sub-page data only when navigated to (avoid initial overload)
-let marketLoaded = false, cropsLoaded = false, pestsLoaded = false;
+let marketLoaded = false, cropsLoaded = false, pestsLoaded = false, predictionLoaded = false;
 const origNavigate = navigate;
 navigate = function (page, el) {
     origNavigate(page, el);
     if (page === 'market' && !marketLoaded) { marketLoaded = true; loadMarketPrices(); }
     if (page === 'crops' && !cropsLoaded) { cropsLoaded = true; loadCropGuide(); }
     if (page === 'pests' && !pestsLoaded) { pestsLoaded = true; loadPestSolutions(); }
+    if (page === 'prediction' && !predictionLoaded) {
+        predictionLoaded = true;
+        loadPricePrediction('Wheat');
+        loadPriceAdvisory();
+    }
 };
 
 // ── HELPERS ─────────────────────────────────────────────
