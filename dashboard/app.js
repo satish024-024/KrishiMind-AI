@@ -1771,24 +1771,29 @@ function loadPriceAdvisory() {
 }
 
 function loadPredictionMini() {
-    fetch('/api/price-advisory?crop=Wheat')
-        .then(r => r.json())
-        .then(data => {
-            if (!data.advisories || !data.advisories.length) return;
+    const cropsToFetch = ['Wheat', 'Rice', 'Cotton'];
+    const container = document.getElementById('predictionMiniContent');
+    if (!container) return;
+
+    // Show loading state
+    container.innerHTML = '<p class="stat-delta" style="padding: 10px;">Loading forecasts...</p>';
+
+    Promise.all(cropsToFetch.map(crop =>
+        fetch(`/api/price-advisory?crop=${encodeURIComponent(crop)}`)
+            .then(r => r.json())
+            .catch(e => {
+                console.error(`[PredMini] Error fetching ${crop}:`, e);
+                return null;
+            })
+    )).then(responses => {
+        let html = '';
+        responses.forEach(data => {
+            if (!data || !data.advisories || !data.advisories.length) return;
             const a = data.advisories[0];
-            const el = (id) => document.getElementById(id);
-            el('predMiniCrop').textContent = `${a.icon} ${a.crop}`;
-            el('predMiniPrice').innerHTML = `₹${a.current_price.toLocaleString('en-IN')}<span class="stat-unit">/qt</span>`;
 
             const trendStr = a.trend === 'rising' ? `↑ ${a.change_pct}%` :
                 a.trend === 'falling' ? `↓ ${Math.abs(a.change_pct)}%` : `→ ${a.change_pct}%`;
-            const trendColor = a.trend === 'rising' ? '#22c55e' : a.trend === 'falling' ? '#ef4444' : '#6b7280';
-            const trendEl = el('predMiniTrend');
-            trendEl.textContent = `${trendStr} forecast`;
-            trendEl.className = `stat-delta ${a.trend === 'rising' ? 'up' : a.trend === 'falling' ? 'down' : ''}`;
 
-            const verdictEl = el('predMiniVerdict');
-            verdictEl.textContent = a.verdict;
             const badgeColors = {
                 green: { bg: '#dcfce7', color: '#15803d' },
                 red: { bg: '#fee2e2', color: '#b91c1c' },
@@ -1796,10 +1801,28 @@ function loadPredictionMini() {
                 blue: { bg: '#dbeafe', color: '#1e40af' }
             };
             const bc = badgeColors[a.action_color] || badgeColors.amber;
-            verdictEl.style.background = bc.bg;
-            verdictEl.style.color = bc.color;
-        })
-        .catch(e => console.error('[PredMini] Error:', e));
+            const trendClass = a.trend === 'rising' ? 'up' : a.trend === 'falling' ? 'down' : '';
+
+            // This structure works for both desktop and mobile as they both use flex row styling now
+            html += `
+                <div style="flex-shrink: 0; min-width: 130px; border: 1px solid var(--gray-100); border-radius: 12px; padding: 12px; background: white; box-shadow: 0 2px 8px -2px rgba(0,0,0,0.02)">
+                    <p style="font-size: 0.85rem; font-weight: 700; color: var(--gray-800); margin-bottom: 4px;">${a.icon} ${a.crop}</p>
+                    <p style="font-size: 1.25rem; font-weight: 800; color: var(--gray-900); font-variant-numeric: tabular-nums;">₹${a.current_price.toLocaleString('en-IN')}<span style="font-size: 0.75rem; font-weight: 400; color: var(--gray-400);">/qt</span></p>
+                    <p class="stat-delta ${trendClass}" style="margin: 4px 0;">${trendStr} forecast</p>
+                    <div style="margin-top: 8px; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; display: inline-block; background: ${bc.bg}; color: ${bc.color}">${a.verdict}</div>
+                </div>
+            `;
+        });
+
+        if (html) {
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = '<p class="stat-delta" style="padding: 10px; color: var(--red-500);">Could not load forecasts.</p>';
+        }
+    }).catch(e => {
+        console.error('[PredMini] Promise.all error:', e);
+        container.innerHTML = '<p class="stat-delta" style="padding: 10px; color: var(--red-500);">Failed to load forecasts.</p>';
+    });
 }
 
 // Load mini widget on dashboard init (delay to not block critical loads)

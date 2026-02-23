@@ -223,19 +223,16 @@
                     </div>
 
                     <!-- Price Prediction Mini -->
-                    <div class="m-card m-card-prediction" onclick="navigate('prediction')">
-                        <div class="m-card-row">
-                            <div>
-                                <span class="m-card-label">📈 Price Forecast</span>
-                                <p class="m-card-val" id="predMiniCrop" style="font-size:1rem;margin-top:4px">Wheat</p>
-                                <p class="m-card-val" id="predMiniPrice">--<span class="m-card-unit">/qt</span></p>
-                                <p class="m-card-sub" id="predMiniTrend">Loading forecast...</p>
-                            </div>
+                    <div class="m-card m-card-prediction" onclick="navigate('prediction')" style="padding-bottom:12px">
+                        <div class="m-card-row" style="margin-bottom:8px">
+                            <span class="m-card-label">📈 Price Forecasts</span>
                             <span class="m-card-bigicon">🔮</span>
                         </div>
-                        <div class="pred-mini-verdict" id="predMiniVerdict"
-                            style="margin-top:0.5rem;padding:4px 10px;border-radius:8px;font-size:0.7rem;font-weight:700;display:inline-block">
-                            --</div>
+                        <div id="predictionMiniContent"
+                            style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;">
+                            <!-- Dynamically populated by app.js -->
+                            <p class="m-card-sub" id="predMiniTrend" style="margin: 0;">Loading forecasts...</p>
+                        </div>
                     </div>
 
                     <!-- Crop Calendar -->

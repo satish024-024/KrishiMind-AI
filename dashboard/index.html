@@ -244,18 +244,13 @@
 
                         <!-- Price Prediction Mini Widget -->
                         <div class="bento-card bento-prediction-mini" onclick="navigate('prediction')"
-                            style="--delay:9;cursor:pointer">
-                            <div class="stat-top"><span class="stat-label">📈 Price Forecast</span><span
+                            style="--delay:9;cursor:pointer;padding-bottom:12px">
+                            <div class="stat-top"><span class="stat-label">📈 Price Forecasts</span><span
                                     class="stat-icon bg-orange">🔮</span></div>
-                            <div id="predictionMiniContent">
-                                <p class="stat-val" id="predMiniCrop" style="font-size:1rem;margin:0.5rem 0 0.25rem">
-                                    Wheat</p>
-                                <p class="stat-val" id="predMiniPrice" style="font-size:1.5rem">--<span
-                                        class="stat-unit">/qt</span></p>
-                                <p class="stat-delta" id="predMiniTrend">Loading forecast...</p>
-                                <div class="pred-mini-verdict" id="predMiniVerdict"
-                                    style="margin-top:0.5rem;padding:4px 10px;border-radius:8px;font-size:0.7rem;font-weight:700;display:inline-block">
-                                    --</div>
+                            <div id="predictionMiniContent"
+                                style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none;">
+                                <!-- Dynamically populated by app.js -->
+                                <p class="stat-delta">Loading forecasts...</p>
                             </div>
                         </div>
 
