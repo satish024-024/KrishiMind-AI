@@ -12,6 +12,7 @@
         "restartPolicyMaxRetries": 3
     },
     "variables": {
+        "NIXPACKS_PKGS": "python311 nodejs_20",
         "NIXPACKS_NODE_VERSION": "20"
     }
 }
