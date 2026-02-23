@@ -111,7 +111,10 @@ Indian farmers often lack access to timely, accurate agricultural information. K
 | 🌐 **Multi-language** | 8 Indian languages supported |
 | 📊 **Confidence Scoring** | Every answer shows relevance percentage |
 | 🔒 **Offline Mode** | Works without internet using local FAISS index |
-| 📱 **Responsive Design** | Works on desktop, tablet, and mobile |
+| 🌿 **Crop Guide** | Comprehensive guide for crop management and cycles |
+| 📈 **Price Prediction** | AI-powered 30-day price forecasts with state-specific data |
+| 🇮🇳 **Farmer Advisory** | Buy/Sell/Hold guidance based on Agmarknet vs MSP 2025-26 |
+| 📍 **Smart Location** | Auto-detected location with state-wise filtering (AP, MH, etc.) |
 
 ### Two User Interfaces
 | Interface | Technology | URL | Best For |
@@ -121,10 +124,11 @@ Indian farmers often lack access to timely, accurate agricultural information. K
 
 ### Dashboard Highlights
 - 🔐 **Secure Authentication** — Login/Register with session management
-- 📍 **Live Market Prices** — Real-time data from *data.gov.in* (Indian Mandis)
+- 📍 **Live Market Prices** — Daily Agmarknet data from *data.gov.in*
+- 📈 **State-Specific Forecasts** — Dedicated filters for **Andhra Pradesh**, Maharashtra, etc.
+- 🇮� **Government MSP Sync** — Real-time comparison with **CCEA 2025-26** reference prices
+- 🧠 **Honest AI Confidence** — Transparent "±~15% trend estimate" instead of misleading high percentages
 - 🌤️ **Local Weather** — Auto-detected location based weather
-- 🌿 Dark green sidebar with wheat pattern
-- 📊 Quick stat cards (Weather, Prices, Soil pH, Alerts)
 - 💬 Real-time chat with typing indicators
 - 🔥 Popular questions panel
 - 🕐 Query history
@@ -362,6 +366,38 @@ Get popular questions grouped by category.
     ]
 }
 ```
+### `GET /api/price-prediction`
+Get 30-day price forecast and historical trends.
+**Query Params:** `?crop=Wheat&state=Andhra Pradesh`
+**Response:** Includes current price, predicted price, trend (rising/falling), confidence band, and methodology note.
+
+### `GET /api/price-advisory`
+Get actionable buy/sell/hold guidance for all major crops.
+**Query Params:** `?state=Maharashtra` (optional)
+**Response:** Actionable verdicts based on daily mandi prices vs govt. MSP 2025-26.
+
+---
+
+## 📈 AI Price Prediction & Advisory
+
+The dashboard features a dedicated **Prediction & Advisory Engine** designed to help farmers make data-driven selling decisions.
+
+### How Prediction Works
+- **Model**: Weighted Moving Average (WMA-30) + Linear Regression Slope Analysis.
+- **Accuracy**: Reported as an honest **±~15% trend estimate** (7-14 days most reliable).
+- **Data Source**: Aggregated daily mandi prices from **Agmarknet (data.gov.in)**.
+- **MSP Reference**: Latest **CCEA Govt. of India 2025-26** approved prices via *pib.gov.in*.
+
+### Farmer Advisory Logic
+The system generates three primary verdicts:
+1. 🟢 **SELL NOW**: Market price is high and forecast is falling (Take profits!).
+2. 🔴 **SELL AT MSP**: Market price is below MSP. Use government procurement for guaranteed income.
+3. 🟡 **HOLD**: Market is stable or rising. Wait for better rates.
+
+### Location Specificity
+The engine supports **state-wise historical synchronization** for:
+- **Andhra Pradesh** (Newly added!)
+- Maharashtra, Punjab, Uttar Pradesh, Rajasthan, Madhya Pradesh, Gujarat, Haryana, Karnataka, West Bengal.
 
 ---
 
