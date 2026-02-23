@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KrishiMind AI — Smart Agriculture Assistant</title>
+    <title>Agri Advisor — Smart Agriculture Assistant</title>
     <meta name="description" content="AI-powered agricultural advisor for Indian farmers">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -19,8 +19,8 @@
         <div class="sidebar-logo">
             <div class="logo-icon">🌾</div>
             <div>
-                <h1 class="logo-text">KrishiMind AI</h1>
-                <p class="logo-sub">Powered by watsonx</p>
+                <h1 class="logo-text">Agri Advisor</h1>
+                <p class="logo-sub">Powered by AI</p>
             </div>
         </div>
         <nav class="nav">
@@ -49,9 +49,7 @@
                 <select id="langSelect">
                     <option value="en">English</option>
                     <option value="hi">हिन्दी</option>
-                    <option value="mr">मराठी</option>
                     <option value="te">తెలుగు</option>
-                    <option value="ta">தமிழ்</option>
                 </select>
             </div>
             <div class="user-info">
@@ -161,7 +159,7 @@
                                 <span class="aitip-icon">🤖</span>
                                 <div>
                                     <p class="aitip-title" data-i18n="ai_daily_tip">AI Daily Tip</p>
-                                    <p class="aitip-sub" data-i18n="powered_by">Powered by KrishiMind AI</p>
+                                    <p class="aitip-sub" data-i18n="powered_by">Powered by AI</p>
                                 </div>
                             </div>
                             <div class="aitip-body" id="aiTipBody">
@@ -292,7 +290,7 @@
                     <div id="chatArea" class="chat-area">
                         <div class="chat-welcome">
                             <div class="cw-icon">🌾</div>
-                            <h2 data-i18n="chat_welcome">Welcome to KrishiMind AI</h2>
+                            <h2 data-i18n="chat_welcome">Welcome to Agri Advisor</h2>
                             <p data-i18n="chat_welcome_sub">Ask any farming question — crop advice, pest control,
                                 weather, market prices</p>
                         </div>
@@ -531,20 +529,71 @@
                         </div>
                     </div>
 
-                    <!-- Advisory Section -->
-                    <div class="pred-advisory-section">
-                        <h3 class="section-title">Farmer Advisory — All Crops <span id="advisoryLocationBadge"
-                                style="font-size:0.75rem;font-weight:400;opacity:0.6;margin-left:8px"></span></h3>
-                        <p class="page-sub" style="margin-bottom:1rem">Buy/sell/hold guidance based on Agmarknet mandi
-                            data and MSP 2025-26 (CCEA, Govt. of India)</p>
-                        <div class="pred-advisory-grid" id="advisoryGrid">
-                            <div class="skeleton" style="height:140px;border-radius:16px"></div>
-                            <div class="skeleton" style="height:140px;border-radius:16px"></div>
-                            <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                    <!-- Tabbed Insights Section -->
+                    <div class="pred-tabs-section">
+                        <div class="pred-tabs-nav">
+                            <button class="pred-tab active" data-tab="advisory"
+                                onclick="switchPredTab('advisory', this)">
+                                📋 Advisory</button>
+                            <button class="pred-tab" data-tab="sell-timing"
+                                onclick="switchPredTab('sell-timing', this)">
+                                🕐 Sell Timing</button>
+                            <button class="pred-tab" data-tab="crop-tips" onclick="switchPredTab('crop-tips', this)">
+                                🌾 Crop Tips</button>
+                            <button class="pred-tab" data-tab="market-compare"
+                                onclick="switchPredTab('market-compare', this)">
+                                📍 Market Info</button>
                         </div>
-                        <p class="pred-disclaimer">MSP values are CCEA-approved 2025-26 figures (pib.gov.in). Price
-                            forecasts are model estimates — not published by any government authority. Consult your
-                            nearest APMC or Agriculture Officer before selling.</p>
+
+                        <!-- TAB: Advisory -->
+                        <div class="pred-tab-content active" id="tab-advisory">
+                            <h3 class="section-title">Farmer Advisory — All Crops <span id="advisoryLocationBadge"
+                                    style="font-size:0.75rem;font-weight:400;opacity:0.6;margin-left:8px"></span></h3>
+                            <p class="page-sub" style="margin-bottom:1rem">Buy/sell/hold guidance based on Agmarknet
+                                mandi
+                                data and MSP 2025-26 (CCEA, Govt. of India)</p>
+                            <div class="pred-advisory-grid" id="advisoryGrid">
+                                <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                                <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                                <div class="skeleton" style="height:140px;border-radius:16px"></div>
+                            </div>
+                            <p class="pred-disclaimer">MSP values are CCEA-approved 2025-26 figures (pib.gov.in). Price
+                                forecasts are model estimates — not published by any government authority. Consult your
+                                nearest APMC or Agriculture Officer before selling.</p>
+                        </div>
+
+                        <!-- TAB: Sell Timing -->
+                        <div class="pred-tab-content" id="tab-sell-timing">
+                            <h3 class="section-title">🕐 Optimal Sell Timing <span id="sellTimingCrop"
+                                    style="font-size:0.75rem;font-weight:400;opacity:0.6;margin-left:8px"></span></h3>
+                            <p class="page-sub" style="margin-bottom:1rem">AI analysis of when to sell for maximum
+                                profit based on 30-day forecast</p>
+                            <div id="sellTimingContent">
+                                <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Crop Tips -->
+                        <div class="pred-tab-content" id="tab-crop-tips">
+                            <h3 class="section-title">🌾 Alternative Crop Recommendations <span id="cropTipsCrop"
+                                    style="font-size:0.75rem;font-weight:400;opacity:0.6;margin-left:8px"></span></h3>
+                            <p class="page-sub" style="margin-bottom:1rem">If current crop prices are unfavorable, here
+                                are better alternatives ranked by forecast</p>
+                            <div id="cropTipsContent">
+                                <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                            </div>
+                        </div>
+
+                        <!-- TAB: Market Compare -->
+                        <div class="pred-tab-content" id="tab-market-compare">
+                            <h3 class="section-title">📍 Inter-State Price Comparison <span id="marketCompareCrop"
+                                    style="font-size:0.75rem;font-weight:400;opacity:0.6;margin-left:8px"></span></h3>
+                            <p class="page-sub" style="margin-bottom:1rem">Compare mandi prices across states — sell
+                                where you get the best rate</p>
+                            <div id="marketCompareContent">
+                                <div class="skeleton" style="height:200px;border-radius:16px"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

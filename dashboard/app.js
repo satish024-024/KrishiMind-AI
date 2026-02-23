@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   KrishiMind AI — Dashboard Application Logic v2
+   Agri Advisor — Dashboard Application Logic v2
    Bento grid, real-time data, charts, gauges, calendar
    ═══════════════════════════════════════════════════════ */
 
@@ -106,7 +106,7 @@ const TRANSLATIONS = {
         soil_health: 'Soil Health',
         moisture: 'Moisture',
         ai_daily_tip: 'AI Daily Tip',
-        powered_by: 'Powered by KrishiMind AI',
+        powered_by: 'Powered by Agri Advisor',
         ask_more: 'Ask more →',
         seven_day_temp: '📈 7-Day Temperature',
         market_prices_top: '💰 Market Prices — Top Crops',
@@ -126,7 +126,7 @@ const TRANSLATIONS = {
         activity_feed: '📝 Activity Feed',
         recent_history: '🕐 Recent History',
         // Chat page
-        chat_welcome: 'Welcome to KrishiMind AI',
+        chat_welcome: 'Welcome to Agri Advisor',
         chat_welcome_sub: 'Ask any farming question — crop advice, pest control, weather, market prices',
         chat_placeholder: 'Type your farming question...',
         // Weather page
@@ -165,7 +165,7 @@ const TRANSLATIONS = {
         soil_health: 'मिट्टी स्वास्थ्य',
         moisture: 'नमी',
         ai_daily_tip: 'AI दैनिक सुझाव',
-        powered_by: 'KrishiMind AI द्वारा संचालित',
+        powered_by: 'Agri Advisor द्वारा संचालित',
         ask_more: 'और पूछें →',
         seven_day_temp: '📈 7-दिन का तापमान',
         market_prices_top: '💰 मंडी भाव — प्रमुख फसलें',
@@ -182,7 +182,7 @@ const TRANSLATIONS = {
         popular_questions: '🔥 लोकप्रिय प्रश्न',
         activity_feed: '📝 गतिविधि फ़ीड',
         recent_history: '🕐 हाल का इतिहास',
-        chat_welcome: 'KrishiMind AI में आपका स्वागत है',
+        chat_welcome: 'Agri Advisor में आपका स्वागत है',
         chat_welcome_sub: 'कोई भी खेती का सवाल पूछें — फसल सलाह, कीट नियंत्रण, मौसम, मंडी भाव',
         chat_placeholder: 'अपना खेती का सवाल लिखें...',
         weather_title: '🌤️ मौसम पूर्वानुमान',
@@ -216,7 +216,7 @@ const TRANSLATIONS = {
         soil_health: 'నేల ఆరోగ్యం',
         moisture: 'తేమ',
         ai_daily_tip: 'AI రోజువారీ చిట్కా',
-        powered_by: 'KrishiMind AI ద్వారా నడుస్తుంది',
+        powered_by: 'Agri Advisor ద్వారా నడుస్తుంది',
         ask_more: 'మరింత అడగండి →',
         seven_day_temp: '📈 7-రోజుల ఉష్ణోగ్రత',
         market_prices_top: '💰 మార్కెట్ ధరలు — ప్రధాన పంటలు',
@@ -233,7 +233,7 @@ const TRANSLATIONS = {
         popular_questions: '🔥 జనాదరణ పొందిన ప్రశ్నలు',
         activity_feed: '📝 కార్యకలాపాల ఫీడ్',
         recent_history: '🕐 ఇటీవలి చరిత్ర',
-        chat_welcome: 'KrishiMind AI కి స్వాగతం',
+        chat_welcome: 'Agri Advisor కి స్వాగతం',
         chat_welcome_sub: 'ఏదైనా వ్యవసాయ ప్రశ్న అడగండి — పంట సలహా, పురుగుల నియంత్రణ, వాతావరణం, మార్కెట్ ధరలు',
         chat_placeholder: 'మీ వ్యవసాయ ప్రశ్నను టైప్ చేయండి...',
         weather_title: '🌤️ వాతావరణ అంచనా',
@@ -381,7 +381,7 @@ async function autoDetectLocation() {
         try {
             const res = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`,
-                { headers: { 'User-Agent': 'KrishiMindAI/1.0' } }
+                { headers: { 'User-Agent': 'AgriAdvisor/1.0' } }
             );
             const geo = await res.json();
             cityName = geo.address?.city || geo.address?.town || geo.address?.county || geo.address?.state_district;
@@ -1804,6 +1804,278 @@ function loadPredictionMini() {
 
 // Load mini widget on dashboard init (delay to not block critical loads)
 setTimeout(loadPredictionMini, 3000);
+
+// ── PREDICTION TAB SYSTEM ───────────────────────────────
+function switchPredTab(tabId, btnEl) {
+    // Deactivate all tabs
+    document.querySelectorAll('.pred-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pred-tab-content').forEach(c => c.classList.remove('active'));
+
+    // Activate the selected tab
+    if (btnEl) btnEl.classList.add('active');
+    const content = document.getElementById('tab-' + tabId);
+    if (content) content.classList.add('active');
+
+    // Lazy-load tab data
+    const crop = document.getElementById('predCropSelect')?.value || 'Wheat';
+    const stateSelect = document.getElementById('predStateSelect');
+    const state = stateSelect && stateSelect.value ? stateSelect.value : getLocationState();
+
+    if (tabId === 'sell-timing' && !switchPredTab._sellLoaded) {
+        switchPredTab._sellLoaded = true;
+        loadSellTiming(crop, state);
+    }
+    if (tabId === 'crop-tips' && !switchPredTab._altLoaded) {
+        switchPredTab._altLoaded = true;
+        loadCropAlternatives(crop, state);
+    }
+    if (tabId === 'market-compare' && !switchPredTab._compareLoaded) {
+        switchPredTab._compareLoaded = true;
+        loadStateComparison(crop);
+    }
+}
+
+// Reset tab lazy-load flags when crop/state changes
+const origLoadPricePrediction = loadPricePrediction;
+loadPricePrediction = function (crop) {
+    switchPredTab._sellLoaded = false;
+    switchPredTab._altLoaded = false;
+    switchPredTab._compareLoaded = false;
+
+    origLoadPricePrediction(crop);
+
+    // Reload active tab if not advisory
+    const activeTab = document.querySelector('.pred-tab.active');
+    if (activeTab) {
+        const tabId = activeTab.getAttribute('data-tab');
+        if (tabId !== 'advisory') {
+            switchPredTab(tabId, activeTab);
+        }
+    }
+};
+
+// ── SELL TIMING ─────────────────────────────────────────
+function loadSellTiming(crop, state) {
+    const el = document.getElementById('sellTimingContent');
+    const label = document.getElementById('sellTimingCrop');
+    if (label) label.textContent = `${crop}${state ? ' • ' + state : ''}`;
+
+    const stateParam = state ? `&state=${encodeURIComponent(state)}` : '';
+    fetch(`/api/sell-timing?crop=${encodeURIComponent(crop)}${stateParam}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { el.innerHTML = `<p style="color:#ef4444">❌ ${data.error}</p>`; return; }
+
+            const urgencyIcons = { low: '🟢', medium: '🟡', high: '🔴' };
+            const urgencyIcon = urgencyIcons[data.urgency] || '🟡';
+
+            const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+            let html = '';
+
+            // Recommendation banner
+            html += `<div class="sell-timing-recommendation urgency-${data.urgency}">
+                <div class="sell-rec-icon">${urgencyIcon}</div>
+                <div>
+                    <div class="sell-rec-text">${data.recommendation}</div>
+                    ${data.msp_info ? `<div class="sell-rec-sub">💡 ${data.msp_info}</div>` : ''}
+                </div>
+            </div>`;
+
+            // Best / Worst cards
+            html += `<div class="sell-timing-hero">
+                <div class="sell-timing-card best">
+                    <div class="sell-timing-label">📈 Best Sell Day</div>
+                    <div class="sell-timing-price">₹${data.best_sell_day.price.toLocaleString('en-IN')}</div>
+                    <div class="sell-timing-date">📅 ${formatDate(data.best_sell_day.date)} · ${data.best_sell_day.gain_pct >= 0 ? '+' : ''}${data.best_sell_day.gain_pct}% vs today</div>
+                </div>
+                <div class="sell-timing-card worst">
+                    <div class="sell-timing-label">📉 Worst Sell Day</div>
+                    <div class="sell-timing-price">₹${data.worst_sell_day.price.toLocaleString('en-IN')}</div>
+                    <div class="sell-timing-date">📅 ${formatDate(data.worst_sell_day.date)}</div>
+                </div>
+            </div>`;
+
+            // Weekly analysis
+            if (data.weekly_analysis && data.weekly_analysis.length) {
+                html += `<h4 style="font-size:0.9rem;font-weight:700;color:#374151;margin-bottom:0.5rem">📊 Weekly Price Analysis</h4>`;
+                html += `<div class="weekly-bars">`;
+                data.weekly_analysis.forEach(w => {
+                    const isBest = w.label === data.best_week?.label;
+                    const changeColor = w.change_vs_current >= 0 ? '#22c55e' : '#ef4444';
+                    const changePrefix = w.change_vs_current >= 0 ? '↑' : '↓';
+                    html += `<div class="weekly-bar-item ${isBest ? 'best-week' : ''}">
+                        ${isBest ? '<div style="position:absolute;top:6px;right:8px;font-size:0.6rem;font-weight:700;color:#15803d">★ BEST</div>' : ''}
+                        <div class="weekly-bar-label">${w.label}</div>
+                        <div class="weekly-bar-price">₹${w.avg_price.toLocaleString('en-IN')}</div>
+                        <div class="weekly-bar-change" style="color:${changeColor}">${changePrefix} ${Math.abs(w.change_vs_current)}%</div>
+                        <div class="weekly-bar-dates">${formatDate(w.start_date)} – ${formatDate(w.end_date)}</div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            html += `<p class="pred-disclaimer" style="margin-top:1.25rem">⚠️ Sell timing is based on AI trend extrapolation. Actual prices depend on local supply, weather, and policy. Always consult your APMC/Agriculture Officer.</p>`;
+
+            el.innerHTML = html;
+            addFeedItem(`Sell timing loaded for ${crop}`, 'dot-green');
+        })
+        .catch(e => {
+            el.innerHTML = '<p style="color:#ef4444">❌ Failed to load sell timing analysis</p>';
+            console.error('[SellTiming]', e);
+        });
+}
+
+// ── CROP ALTERNATIVES ───────────────────────────────────
+function loadCropAlternatives(crop, state) {
+    const el = document.getElementById('cropTipsContent');
+    const label = document.getElementById('cropTipsCrop');
+    if (label) label.textContent = `vs ${crop}`;
+
+    const stateParam = state ? `&state=${encodeURIComponent(state)}` : '';
+    fetch(`/api/crop-alternatives?crop=${encodeURIComponent(crop)}${stateParam}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) { el.innerHTML = `<p style="color:#ef4444">❌ ${data.error}</p>`; return; }
+
+            let html = '';
+
+            // Insight banner
+            html += `<div class="crop-alt-insight">
+                <div class="crop-alt-insight-icon">💡</div>
+                <div>${data.insight}<br><small style="opacity:0.6">${data.better_count} crops with better forecast · ${data.rising_count} rising trends</small></div>
+            </div>`;
+
+            // Alternative cards
+            html += `<div class="crop-alt-grid">`;
+            data.alternatives.forEach((a, i) => {
+                const trendClass = a.trend;
+                const changeColor = a.change_pct >= 0 ? '#22c55e' : '#ef4444';
+                const scoreBg = a.score > 5 ? '#dcfce7' : a.score > 0 ? '#fef3c7' : '#fee2e2';
+                const scoreColor = a.score > 5 ? '#15803d' : a.score > 0 ? '#92400e' : '#b91c1c';
+                const seasonBg = a.season_match ? '#dcfce7' : '#f3f4f6';
+                const seasonColor = a.season_match ? '#166534' : '#6b7280';
+                const seasonLabel = a.season === 'kharif' ? 'Kharif' : a.season === 'rabi' ? 'Rabi' : a.season === 'volatile' ? 'Year-round' : a.season;
+
+                html += `<div class="crop-alt-card ${trendClass}" style="animation-delay:${i * 0.06}s">
+                    <div class="crop-alt-header">
+                        <div class="crop-alt-name">
+                            <span>${a.icon}</span>
+                            <strong>${a.crop}</strong>
+                        </div>
+                        <span class="crop-alt-score" style="background:${scoreBg};color:${scoreColor}">
+                            ${a.change_pct >= 0 ? '↑' : '↓'} ${Math.abs(a.change_pct)}%
+                        </span>
+                    </div>
+                    <div class="crop-alt-stats">
+                        <div class="crop-alt-stat">
+                            <span class="crop-alt-stat-label">Current</span>
+                            <span class="crop-alt-stat-val">₹${a.current_price.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="crop-alt-stat">
+                            <span class="crop-alt-stat-label">Forecast</span>
+                            <span class="crop-alt-stat-val" style="color:${changeColor}">₹${a.predicted_price.toLocaleString('en-IN')}</span>
+                        </div>
+                        <div class="crop-alt-stat">
+                            <span class="crop-alt-stat-label">MSP</span>
+                            <span class="crop-alt-stat-val">${a.msp ? '₹' + a.msp.toLocaleString('en-IN') : 'None'}</span>
+                        </div>
+                        <div class="crop-alt-stat">
+                            <span class="crop-alt-stat-label">Trend</span>
+                            <span class="crop-alt-stat-val">${a.trend === 'rising' ? '📈' : a.trend === 'falling' ? '📉' : '➡️'} ${a.trend}</span>
+                        </div>
+                    </div>
+                    <span class="crop-alt-season-badge" style="background:${seasonBg};color:${seasonColor}">${seasonLabel}${a.season_match ? ' ✓ Same season' : ''}</span>
+                </div>`;
+            });
+            html += `</div>`;
+
+            el.innerHTML = html;
+            addFeedItem(`Crop alternatives loaded for ${crop}`, 'dot-blue');
+        })
+        .catch(e => {
+            el.innerHTML = '<p style="color:#ef4444">❌ Failed to load crop alternatives</p>';
+            console.error('[CropAlternatives]', e);
+        });
+}
+
+// ── STATE COMPARISON ────────────────────────────────────
+function loadStateComparison(crop) {
+    const el = document.getElementById('marketCompareContent');
+    const label = document.getElementById('marketCompareCrop');
+    if (label) label.textContent = crop;
+
+    fetch(`/api/state-comparison?crop=${encodeURIComponent(crop)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                el.innerHTML = `<div class="state-compare-insight" style="border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+                    <div style="font-size:1.5rem">📊</div>
+                    <div>No state-wise data available for ${crop}. State comparison requires multi-state mandi data from data.gov.in.</div>
+                </div>`;
+                return;
+            }
+
+            let html = '';
+
+            // Insight banner
+            if (data.insight) {
+                html += `<div class="state-compare-insight">
+                    <div style="font-size:1.5rem">🏆</div>
+                    <div>${data.insight}</div>
+                </div>`;
+            }
+
+            // Comparison table
+            html += `<table class="state-compare-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>State</th>
+                        <th>Current Price</th>
+                        <th>Avg Price</th>
+                        <th>High / Low</th>
+                        <th>Trend</th>
+                        <th>vs National</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            data.comparisons.forEach((s, i) => {
+                const rank = i + 1;
+                const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+                const isBest = i === 0;
+                const trendColor = s.trend_pct > 0 ? '#22c55e' : s.trend_pct < 0 ? '#ef4444' : '#6b7280';
+                const trendBg = s.trend_pct > 0 ? '#dcfce7' : s.trend_pct < 0 ? '#fee2e2' : '#f3f4f6';
+                const trendIcon = s.trend_pct > 0 ? '↑' : s.trend_pct < 0 ? '↓' : '→';
+                const natColor = s.vs_national > 0 ? '#22c55e' : s.vs_national < 0 ? '#ef4444' : '#6b7280';
+                const natPrefix = s.vs_national > 0 ? '+' : '';
+
+                html += `<tr class="${isBest ? 'best-row' : ''}">
+                    <td><span class="state-rank-badge ${rankClass}">${rank}</span></td>
+                    <td><strong>${s.state}</strong></td>
+                    <td style="font-weight:700">₹${s.current_price.toLocaleString('en-IN')}</td>
+                    <td>₹${s.avg_price.toLocaleString('en-IN')}</td>
+                    <td style="font-size:0.78rem">₹${s.high_price.toLocaleString('en-IN')} / ₹${s.low_price.toLocaleString('en-IN')}</td>
+                    <td><span class="state-trend-badge" style="background:${trendBg};color:${trendColor}">${trendIcon} ${Math.abs(s.trend_pct)}%</span></td>
+                    <td><span class="state-national-badge" style="color:${natColor}">${natPrefix}₹${Math.abs(s.vs_national).toLocaleString('en-IN')}</span></td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+
+            if (data.msp) {
+                html += `<p style="margin-top:0.75rem;font-size:0.72rem;color:#6b7280">📌 MSP 2025-26: ₹${data.msp.toLocaleString('en-IN')}/qt · Source: ${data.source} · Updated: ${data.last_updated ? new Date(data.last_updated).toLocaleDateString() : 'N/A'}</p>`;
+            }
+
+            el.innerHTML = html;
+            addFeedItem(`State comparison loaded for ${crop}`, 'dot-amber');
+        })
+        .catch(e => {
+            el.innerHTML = '<p style="color:#ef4444">❌ Failed to load state comparison</p>';
+            console.error('[StateComparison]', e);
+        });
+}
 
 // ── LAZY LOAD SUB-PAGES ─────────────────────────────────
 // Load sub-page data only when navigated to (avoid initial overload)

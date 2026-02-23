@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agri Advisor — Smart Agriculture Assistant</title>
+    <meta name="description" content="AI-powered agricultural advisor for Indian farmers">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/dashboard/mobile.css">
+</head>
+
+<body>
+    <!-- SIDEBAR OVERLAY (for More drawer) -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeMobileDrawer()"></div>
+
+    <!-- HIDDEN SIDEBAR (keeps app.js sidebar references working) -->
+    <aside id="sidebar" class="sidebar" style="display:none">
+        <nav class="nav">
+            <a href="#" class="nav-item active" data-page="dashboard" onclick="navigate('dashboard',this)">
+                <span>📊</span> <span data-i18n="nav_dashboard">Dashboard</span></a>
+            <a href="#" class="nav-item" data-page="chat" onclick="navigate('chat',this)">
+                <span>🤖</span> <span data-i18n="nav_ask_ai">Ask AI</span></a>
+            <a href="#" class="nav-item" data-page="weather" onclick="navigate('weather',this)">
+                <span>🌤️</span> <span data-i18n="nav_weather">Weather</span></a>
+            <a href="#" class="nav-item" data-page="market" onclick="navigate('market',this)">
+                <span>💰</span> <span data-i18n="nav_market">Market Prices</span></a>
+            <a href="#" class="nav-item" data-page="crops" onclick="navigate('crops',this)">
+                <span>🌱</span> <span data-i18n="nav_crops">Crop Guide</span></a>
+            <a href="#" class="nav-item" data-page="pests" onclick="navigate('pests',this)">
+                <span>🐛</span> <span data-i18n="nav_pests">Pest Solutions</span></a>
+            <a href="#" class="nav-item" data-page="prediction" onclick="navigate('prediction',this)">
+                <span>📈</span> <span data-i18n="nav_prediction">Price Prediction</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="lang-select">
+                <span>🌐</span>
+                <select id="langSelect">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="te">తెలుగు</option>
+                </select>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">👤</div>
+                <div style="flex:1">
+                    <p class="user-name">User</p>
+                    <p class="user-role" style="font-size:0.7rem;color:#059669">● Online</p>
+                </div>
+                <button onclick="logout()"
+                    style="background:none;border:none;cursor:pointer;font-size:1.2rem;opacity:0.7"
+                    title="Logout">🚪</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ═══ MOBILE TOP HEADER ═══ -->
+    <header class="m-header">
+        <div class="m-header-left">
+            <div class="m-logo-icon">🌾</div>
+            <div>
+                <h1 class="m-logo-text">Agri Advisor</h1>
+                <p class="m-logo-sub">AI Powered</p>
+            </div>
+        </div>
+        <div class="m-header-right">
+            <button onclick="showLocationPicker()" id="locationBadge" class="m-location-badge" title="Change location">
+                📍 <span id="locationBadgeText" data-i18n="select_location">Location</span>
+            </button>
+            <button onclick="toggleOnline()" id="modeBtn" class="m-mode-btn online">
+                <span id="modeDot" class="mode-dot"></span>
+                <span id="modeText">Online</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="main">
+        <div class="pages">
+
+            <!-- ══ PAGE: Dashboard ══ -->
+            <section id="page-dashboard" class="page active">
+                <div class="m-page-pad">
+                    <!-- Hero Banner -->
+                    <div class="hero-banner" id="heroBanner">
+                        <div class="hero-content">
+                            <p class="hero-greeting" id="heroGreeting" data-i18n="hero_greeting">Good Evening</p>
+                            <h2 class="hero-title" data-i18n="hero_welcome">Welcome back, Farmer! 👋</h2>
+                            <p class="hero-sub" id="heroSub" data-i18n="hero_sub">Loading farm overview...</p>
+                        </div>
+                        <div class="hero-right">
+                            <div class="hero-date" id="heroDate"></div>
+                            <div class="hero-weather-mini" id="heroWeatherMini">
+                                <span class="hero-temp" id="heroTemp">--°</span>
+                                <span class="hero-wicon" id="heroWicon">🌤️</span>
+                            </div>
+                        </div>
+                        <div class="hero-pattern"></div>
+                    </div>
+
+                    <!-- Quick Actions (2×2 Grid) -->
+                    <div class="m-section-head">⚡ Quick Actions</div>
+                    <div class="m-quick-grid">
+                        <button class="m-quick-card"
+                            onclick="navigate('chat');setTimeout(()=>askQuestion('What crops should I plant this season?'),300)">
+                            <span class="m-quick-icon">🌱</span>
+                            <strong data-i18n="qa_crop">Crop Advice</strong>
+                            <small data-i18n="qa_crop_sub">AI recommendation</small>
+                        </button>
+                        <button class="m-quick-card"
+                            onclick="navigate('chat');setTimeout(()=>askQuestion('How to control pests in my farm?'),300)">
+                            <span class="m-quick-icon">🐛</span>
+                            <strong data-i18n="qa_pest">Pest Check</strong>
+                            <small data-i18n="qa_pest_sub">Identify & treat</small>
+                        </button>
+                        <button class="m-quick-card" onclick="navigate('weather')">
+                            <span class="m-quick-icon">🌧️</span>
+                            <strong data-i18n="qa_weather">Weather</strong>
+                            <small data-i18n="qa_weather_sub">7-day forecast</small>
+                        </button>
+                        <button class="m-quick-card" onclick="navigate('market')">
+                            <span class="m-quick-icon">📈</span>
+                            <strong data-i18n="qa_market">Market</strong>
+                            <small data-i18n="qa_market_sub">Live mandi rates</small>
+                        </button>
+                    </div>
+
+                    <!-- Weather Card -->
+                    <div class="m-card m-card-weather" onclick="navigate('weather')">
+                        <div class="m-card-row">
+                            <div>
+                                <span class="m-card-label" data-i18n="weather">Weather</span>
+                                <p class="m-card-val" id="dashTemp">--°C</p>
+                                <p class="m-card-sub" id="dashWeatherDesc">Loading...</p>
+                            </div>
+                            <span class="m-card-bigicon">🌤️</span>
+                        </div>
+                        <div class="mini-forecast" id="miniForecast"></div>
+                    </div>
+
+                    <!-- Market Ticker -->
+                    <div class="m-card">
+                        <div class="m-card-header">
+                            <span class="m-card-label" data-i18n="market_prices_top">💰 Market Prices — Top Crops</span>
+                            <a href="#" onclick="event.preventDefault();navigate('market')" class="m-card-link"
+                                data-i18n="view_all">View all →</a>
+                        </div>
+                        <div class="ticker-scroll" id="tickerScroll">
+                            <div class="skeleton" style="height:56px;width:140px;border-radius:12px;flex-shrink:0">
+                            </div>
+                            <div class="skeleton" style="height:56px;width:140px;border-radius:12px;flex-shrink:0">
+                            </div>
+                            <div class="skeleton" style="height:56px;width:140px;border-radius:12px;flex-shrink:0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wheat Price -->
+                    <div class="m-card" onclick="navigate('market')">
+                        <div class="m-card-row">
+                            <div>
+                                <span class="m-card-label" data-i18n="wheat_price">Wheat Price</span>
+                                <p class="m-card-val" id="dashWheatPrice">--<span class="m-card-unit">/qt</span></p>
+                                <p class="m-card-sub" id="dashWheatDelta">Loading...</p>
+                            </div>
+                            <span class="m-card-bigicon">🌾</span>
+                        </div>
+                        <canvas id="wheatSparkline" class="sparkline-canvas" width="160" height="36"></canvas>
+                    </div>
+
+                    <!-- Soil Health -->
+                    <div class="m-card">
+                        <div class="m-card-row">
+                            <div>
+                                <span class="m-card-label" data-i18n="soil_health">Soil Health</span>
+                                <p class="m-card-sub" id="dashSoilStatus">Loading...</p>
+                            </div>
+                            <div class="gauge-wrap">
+                                <svg class="gauge-ring" viewBox="0 0 80 80">
+                                    <circle cx="40" cy="40" r="34" fill="none" stroke="#e5e7eb" stroke-width="6" />
+                                    <circle id="soilGaugeCircle" cx="40" cy="40" r="34" fill="none" stroke="#22c55e"
+                                        stroke-width="6" stroke-linecap="round" stroke-dasharray="213.6"
+                                        stroke-dashoffset="213.6" transform="rotate(-90 40 40)"
+                                        style="transition:stroke-dashoffset 1.5s ease" />
+                                </svg>
+                                <div class="gauge-center">
+                                    <span class="gauge-val" id="dashSoilVal">--</span>
+                                    <span class="gauge-label" data-i18n="moisture">Moisture</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Daily Tip -->
+                    <div class="m-card m-card-aitip" id="aiTipCard">
+                        <div class="aitip-glow"></div>
+                        <div class="aitip-header">
+                            <span class="aitip-icon">🤖</span>
+                            <div>
+                                <p class="aitip-title" data-i18n="ai_daily_tip">AI Daily Tip</p>
+                                <p class="aitip-sub" data-i18n="powered_by">Powered by AI</p>
+                            </div>
+                        </div>
+                        <div class="aitip-body" id="aiTipBody">
+                            <div class="skeleton" style="height:14px;width:90%;border-radius:6px;margin-bottom:8px">
+                            </div>
+                            <div class="skeleton" style="height:14px;width:75%;border-radius:6px;margin-bottom:8px">
+                            </div>
+                            <div class="skeleton" style="height:14px;width:60%;border-radius:6px"></div>
+                        </div>
+                        <button class="aitip-ask"
+                            onclick="navigate('chat');setTimeout(()=>askQuestion('Give me a farming tip for today based on current weather and season'),300)">
+                            <span data-i18n="ask_more">Ask more →</span>
+                        </button>
+                    </div>
+
+                    <!-- 7-Day Temp Chart -->
+                    <div class="m-card">
+                        <span class="m-card-label" data-i18n="seven_day_temp">📈 7-Day Temperature</span>
+                        <canvas id="tempChart" class="temp-chart-canvas"
+                            style="width:100%;height:180px;margin-top:8px"></canvas>
+                    </div>
+
+                    <!-- Price Prediction Mini -->
+                    <div class="m-card m-card-prediction" onclick="navigate('prediction')">
+                        <div class="m-card-row">
+                            <div>
+                                <span class="m-card-label">📈 Price Forecast</span>
+                                <p class="m-card-val" id="predMiniCrop" style="font-size:1rem;margin-top:4px">Wheat</p>
+                                <p class="m-card-val" id="predMiniPrice">--<span class="m-card-unit">/qt</span></p>
+                                <p class="m-card-sub" id="predMiniTrend">Loading forecast...</p>
+                            </div>
+                            <span class="m-card-bigicon">🔮</span>
+                        </div>
+                        <div class="pred-mini-verdict" id="predMiniVerdict"
+                            style="margin-top:0.5rem;padding:4px 10px;border-radius:8px;font-size:0.7rem;font-weight:700;display:inline-block">
+                            --</div>
+                    </div>
+
+                    <!-- Crop Calendar -->
+                    <div class="m-card">
+                        <span class="m-card-label">🗓️ Crop Calendar — <span id="calSeasonName">Rabi
+                                Season</span></span>
+                        <div class="calendar-timeline" id="cropCalendar" style="margin-top:8px"></div>
+                    </div>
+
+                    <!-- Popular Questions -->
+                    <div class="m-card">
+                        <span class="m-card-label" data-i18n="popular_questions">🔥 Popular Questions</span>
+                        <div id="dashPopular" class="popular-grid" style="margin-top:8px"></div>
+                    </div>
+
+                    <!-- Activity Feed -->
+                    <div class="m-card">
+                        <span class="m-card-label" data-i18n="activity_feed">📝 Activity Feed</span>
+                        <div id="activityFeed" class="activity-feed" style="margin-top:8px">
+                            <div class="feed-item feed-system"><span class="feed-dot dot-green"></span>
+                                <div>
+                                    <p>System online — FAISS index loaded</p><small>Just now</small>
+                                </div>
+                            </div>
+                            <div class="feed-item feed-system"><span class="feed-dot dot-blue"></span>
+                                <div>
+                                    <p>AI service connected (Gemini)</p><small>Just now</small>
+                                </div>
+                            </div>
+                            <div class="feed-item feed-system"><span class="feed-dot dot-amber"></span>
+                                <div>
+                                    <p>Weather data synced</p><small>Just now</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spacer for bottom nav -->
+                    <div style="height:80px"></div>
+                </div>
+            </section>
+
+            <!-- ══ PAGE: Chat ══ -->
+            <section id="page-chat" class="page">
+                <div class="chat-container m-chat-container">
+                    <div id="chatArea" class="chat-area">
+                        <div class="chat-welcome">
+                            <div class="cw-icon">🌾</div>
+                            <h2 data-i18n="chat_welcome">Welcome to Agri Advisor</h2>
+                            <p data-i18n="chat_welcome_sub">Ask any farming question — crop advice, pest control,
+                                weather, market prices</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-bar m-chat-input-bar">
+                        <input id="chatInput" type="text" data-i18n-ph="chat_placeholder"
+                            placeholder="Type your farming question..." onkeydown="if(event.key==='Enter')sendChat()">
+                        <button onclick="sendChat()" class="chat-send">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <!-- Right Panel (hidden on mobile but kept for JS compat) -->
+                <aside class="right-panel" style="display:none">
+                    <h3 class="rp-title" data-i18n="popular_questions">🔥 Popular Questions</h3>
+                    <div id="popularQuestions"></div>
+                    <hr class="rp-hr">
+                    <h3 class="rp-title" data-i18n="recent_history">🕐 Recent History</h3>
+                    <div id="historyList">
+                        <p class="rp-empty">No queries yet</p>
+                    </div>
+                </aside>
+            </section>
+
+            <!-- ══ PAGE: Weather ══ -->
+            <section id="page-weather" class="page">
+                <div class="m-page-pad">
+                    <h2 class="m-page-title" data-i18n="weather_title">🌤️ Weather Forecast</h2>
+                    <p class="m-page-sub" data-i18n="weather_sub">Real-time weather data for your region</p>
+                    <div class="m-weather-location">
+                        <span>📍 Location:</span>
+                        <select id="weatherCity" onchange="selectLocationFromDropdown(this)">
+                            <option value="20.9320,77.7523">Amravati</option>
+                            <option value="28.6139,77.2090">Delhi</option>
+                            <option value="19.0760,72.8777">Mumbai</option>
+                            <option value="21.1458,79.0882">Nagpur</option>
+                            <option value="26.9124,75.7873">Jaipur</option>
+                            <option value="25.3176,82.9739">Varanasi</option>
+                            <option value="30.7333,76.7794">Chandigarh</option>
+                            <option value="26.8467,80.9462">Lucknow</option>
+                            <option value="23.2599,77.4126">Bhopal</option>
+                            <option value="12.9716,77.5946">Bangalore</option>
+                            <option value="13.0827,80.2707">Chennai</option>
+                        </select>
+                    </div>
+                    <div class="weather-current" id="weatherCurrent">
+                        <div class="skeleton" style="height:160px;border-radius:20px"></div>
+                    </div>
+                    <h3 class="m-section-title" data-i18n="seven_day_forecast">📅 7-Day Forecast</h3>
+                    <div class="forecast-grid" id="forecastGrid">
+                        <div class="skeleton" style="height:110px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:110px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:110px;border-radius:16px"></div>
+                    </div>
+                    <div style="height:80px"></div>
+                </div>
+            </section>
+
+            <!-- ══ PAGE: Market ══ -->
+            <section id="page-market" class="page">
+                <div class="m-page-pad">
+                    <h2 class="m-page-title" data-i18n="market_title">💰 Market Prices</h2>
+                    <p class="m-page-sub" data-i18n="market_sub">Live mandi rates from across India</p>
+                    <div class="market-grid" id="marketGrid">
+                        <div class="skeleton" style="height:90px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:90px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:90px;border-radius:16px"></div>
+                    </div>
+                    <div style="height:80px"></div>
+                </div>
+            </section>
+
+            <!-- ══ PAGE: Crops ══ -->
+            <section id="page-crops" class="page">
+                <div class="m-page-pad">
+                    <h2 class="m-page-title" data-i18n="crop_title">🌱 Crop Guide</h2>
+                    <p class="m-page-sub" data-i18n="crop_sub">Complete growing guide for major Indian crops</p>
+                    <div class="crops-grid" id="cropsGrid">
+                        <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                    </div>
+                    <div style="height:80px"></div>
+                </div>
+            </section>
+
+            <!-- ══ PAGE: Pests ══ -->
+            <section id="page-pests" class="page">
+                <div class="m-page-pad">
+                    <h2 class="m-page-title" data-i18n="pest_title">🐛 Pest Solutions</h2>
+                    <p class="m-page-sub" data-i18n="pest_sub">Identify and treat common crop pests and diseases</p>
+                    <div class="pests-grid" id="pestsGrid">
+                        <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                        <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                    </div>
+                    <div style="height:80px"></div>
+                </div>
+            </section>
+
+            <!-- ══ PAGE: Price Prediction ══ -->
+            <section id="page-prediction" class="page">
+                <div class="m-page-pad">
+                    <div class="pred-header">
+                        <div>
+                            <h2 class="m-page-title">📈 Crop Price Prediction</h2>
+                            <p class="m-page-sub">AI-powered price forecast <span id="predSourceBadge"
+                                    class="pred-source-badge"></span> <span id="predLastUpdated"
+                                    style="font-size:0.7rem;opacity:0.6;display:block;margin-top:4px"></span></p>
+                        </div>
+                    </div>
+                    <div class="m-pred-controls">
+                        <div class="m-pred-control">
+                            <label for="predStateSelect">State:</label>
+                            <select id="predStateSelect"
+                                onchange="loadPricePrediction(document.getElementById('predCropSelect').value)">
+                                <option value="">National Average</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                <option value="Punjab">Punjab</option>
+                                <option value="Rajasthan">Rajasthan</option>
+                                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                <option value="Gujarat">Gujarat</option>
+                                <option value="Haryana">Haryana</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <option value="West Bengal">West Bengal</option>
+                                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            </select>
+                        </div>
+                        <div class="m-pred-control">
+                            <label for="predCropSelect">Crop:</label>
+                            <select id="predCropSelect" onchange="loadPricePrediction(this.value)">
+                                <option value="Wheat">🌾 Wheat</option>
+                                <option value="Rice">🍚 Rice</option>
+                                <option value="Mustard">🌻 Mustard</option>
+                                <option value="Cotton">🏵️ Cotton</option>
+                                <option value="Soyabean">🫘 Soyabean</option>
+                                <option value="Maize">🌽 Maize</option>
+                                <option value="Gram">🫘 Gram</option>
+                                <option value="Onion">🧅 Onion</option>
+                                <option value="Tomato">🍅 Tomato</option>
+                                <option value="Potato">🥔 Potato</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Metrics -->
+                    <div class="pred-metrics" id="predMetrics">
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">Current Price</span>
+                            <span class="pred-metric-val" id="predCurrentPrice">--</span>
+                            <span class="pred-metric-unit">per quintal</span>
+                        </div>
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">MSP (Govt.)</span>
+                            <span class="pred-metric-val" id="predMSP">--</span>
+                            <span class="pred-metric-unit">guaranteed</span>
+                        </div>
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">30-Day Forecast</span>
+                            <span class="pred-metric-val" id="predForecast">--</span>
+                            <span class="pred-metric-unit" id="predForecastChange">--</span>
+                        </div>
+                        <div class="pred-metric-card">
+                            <span class="pred-metric-label">Trend</span>
+                            <span class="pred-metric-val" id="predTrend">--</span>
+                            <span class="pred-metric-unit" id="predConfidence">--</span>
+                            <div id="predSourceMetric" style="font-size:0.6rem;margin-top:0.3rem;opacity:0.7"></div>
+                        </div>
+                    </div>
+
+                    <!-- Chart -->
+                    <div class="pred-chart-wrap">
+                        <h3 class="m-section-title">Price History & Forecast</h3>
+                        <div class="pred-chart-container">
+                            <canvas id="predictionChart"></canvas>
+                        </div>
+                        <div class="pred-chart-legend">
+                            <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>
+                                Historical</span>
+                            <span class="legend-item"><span class="legend-dot"
+                                    style="background:transparent;border:2px dashed #22c55e"></span> Predicted</span>
+                            <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>
+                                MSP</span>
+                        </div>
+                    </div>
+
+                    <!-- Methodology -->
+                    <div class="pred-methodology" id="predMethodology">
+                        <h3 class="m-section-title">🧠 How Prediction Works</h3>
+                        <div class="pred-method-grid">
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">📊</div>
+                                <div class="pred-method-title">Data Source</div>
+                                <div class="pred-method-desc" id="methodDataSource">Loading...</div>
+                            </div>
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">🤖</div>
+                                <div class="pred-method-title">AI Model</div>
+                                <div class="pred-method-desc" id="methodModel">Weighted Moving Avg + Linear Regression
+                                </div>
+                            </div>
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">🎯</div>
+                                <div class="pred-method-title">Accuracy</div>
+                                <div class="pred-method-desc" id="methodAccuracy">Best for 7-14 day forecasts</div>
+                            </div>
+                            <div class="pred-method-card">
+                                <div class="pred-method-icon">🔄</div>
+                                <div class="pred-method-title">Data Points</div>
+                                <div class="pred-method-desc" id="methodDataPoints">--</div>
+                            </div>
+                        </div>
+                        <div class="pred-features-row" id="predFeaturesRow">
+                            <span class="pred-feature-tag">WMA-30</span>
+                            <span class="pred-feature-tag">Trend Slope</span>
+                            <span class="pred-feature-tag">Seasonal Pattern</span>
+                            <span class="pred-feature-tag">MSP Reference</span>
+                            <span class="pred-feature-tag">Confidence Band</span>
+                        </div>
+                        <div class="pred-accuracy-note" id="predAccuracyNote">
+                            <strong>📝 Note:</strong> Predictions based on real mandi data. Most reliable for 7-14
+                            days. Always consult your Agriculture Officer.
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="pred-tabs-section">
+                        <div class="pred-tabs-nav m-pred-tabs-nav">
+                            <button class="pred-tab active" data-tab="advisory"
+                                onclick="switchPredTab('advisory', this)">📋 Advisory</button>
+                            <button class="pred-tab" data-tab="sell-timing"
+                                onclick="switchPredTab('sell-timing', this)">🕐 Sell</button>
+                            <button class="pred-tab" data-tab="crop-tips" onclick="switchPredTab('crop-tips', this)">🌾
+                                Tips</button>
+                            <button class="pred-tab" data-tab="market-compare"
+                                onclick="switchPredTab('market-compare', this)">📍 Compare</button>
+                        </div>
+
+                        <div class="pred-tab-content active" id="tab-advisory">
+                            <h3 class="m-section-title">Farmer Advisory <span id="advisoryLocationBadge"
+                                    style="font-size:0.7rem;font-weight:400;opacity:0.6;margin-left:6px"></span></h3>
+                            <p class="m-page-sub">Buy/sell/hold guidance based on mandi data</p>
+                            <div class="pred-advisory-grid" id="advisoryGrid">
+                                <div class="skeleton" style="height:120px;border-radius:16px"></div>
+                                <div class="skeleton" style="height:120px;border-radius:16px"></div>
+                            </div>
+                            <p class="pred-disclaimer">MSP values are CCEA-approved 2025-26 figures. Price forecasts are
+                                model estimates. Consult your nearest APMC or Agriculture Officer.</p>
+                        </div>
+
+                        <div class="pred-tab-content" id="tab-sell-timing">
+                            <h3 class="m-section-title">🕐 Optimal Sell Timing <span id="sellTimingCrop"
+                                    style="font-size:0.7rem;font-weight:400;opacity:0.6;margin-left:6px"></span></h3>
+                            <p class="m-page-sub">AI analysis of when to sell for maximum profit</p>
+                            <div id="sellTimingContent">
+                                <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                            </div>
+                        </div>
+
+                        <div class="pred-tab-content" id="tab-crop-tips">
+                            <h3 class="m-section-title">🌾 Crop Alternatives <span id="cropTipsCrop"
+                                    style="font-size:0.7rem;font-weight:400;opacity:0.6;margin-left:6px"></span></h3>
+                            <p class="m-page-sub">Better alternatives ranked by forecast</p>
+                            <div id="cropTipsContent">
+                                <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                            </div>
+                        </div>
+
+                        <div class="pred-tab-content" id="tab-market-compare">
+                            <h3 class="m-section-title">📍 Inter-State Comparison <span id="marketCompareCrop"
+                                    style="font-size:0.7rem;font-weight:400;opacity:0.6;margin-left:6px"></span></h3>
+                            <p class="m-page-sub">Compare mandi prices across states</p>
+                            <div id="marketCompareContent">
+                                <div class="skeleton" style="height:180px;border-radius:16px"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="height:80px"></div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ═══ BOTTOM NAVIGATION ═══ -->
+    <nav class="m-bottom-nav" id="mobileBottomNav">
+        <button class="m-nav-tab active" data-page="dashboard" onclick="mobileNav('dashboard', this)">
+            <span class="m-nav-icon">🏠</span>
+            <span class="m-nav-label" data-i18n="nav_dashboard">Home</span>
+        </button>
+        <button class="m-nav-tab" data-page="chat" onclick="mobileNav('chat', this)">
+            <span class="m-nav-icon">🤖</span>
+            <span class="m-nav-label" data-i18n="nav_ask_ai">AI Chat</span>
+            <span class="m-nav-live-dot"></span>
+        </button>
+        <button class="m-nav-tab" data-page="weather" onclick="mobileNav('weather', this)">
+            <span class="m-nav-icon">🌤️</span>
+            <span class="m-nav-label" data-i18n="nav_weather">Weather</span>
+        </button>
+        <button class="m-nav-tab" data-page="market" onclick="mobileNav('market', this)">
+            <span class="m-nav-icon">💰</span>
+            <span class="m-nav-label" data-i18n="nav_market">Market</span>
+        </button>
+        <button class="m-nav-tab" onclick="openMobileDrawer()">
+            <span class="m-nav-icon">☰</span>
+            <span class="m-nav-label">More</span>
+        </button>
+    </nav>
+
+    <!-- ═══ MORE DRAWER (Slide-up) ═══ -->
+    <div class="m-drawer-overlay" id="mobileDrawerOverlay" onclick="closeMobileDrawer()"></div>
+    <div class="m-drawer" id="mobileDrawer">
+        <div class="m-drawer-handle"></div>
+        <div class="m-drawer-title">More Features</div>
+        <div class="m-drawer-grid">
+            <button class="m-drawer-item" onclick="closeMobileDrawer();navigate('crops')">
+                <span class="m-drawer-icon">🌱</span>
+                <span data-i18n="nav_crops">Crop Guide</span>
+            </button>
+            <button class="m-drawer-item" onclick="closeMobileDrawer();navigate('pests')">
+                <span class="m-drawer-icon">🐛</span>
+                <span data-i18n="nav_pests">Pest Solutions</span>
+            </button>
+            <button class="m-drawer-item" onclick="closeMobileDrawer();navigate('prediction')">
+                <span class="m-drawer-icon">📈</span>
+                <span>Price Prediction</span>
+                <span class="m-drawer-badge">NEW</span>
+            </button>
+            <button class="m-drawer-item" onclick="closeMobileDrawer();showLocationPicker()">
+                <span class="m-drawer-icon">📍</span>
+                <span>Change Location</span>
+            </button>
+        </div>
+        <hr class="m-drawer-separator">
+        <div class="m-drawer-section">
+            <div class="m-drawer-lang">
+                <span>🌐 Language</span>
+                <select id="langSelectMobile"
+                    onchange="document.getElementById('langSelect').value=this.value;document.getElementById('langSelect').dispatchEvent(new Event('change'))">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="te">తెలుగు</option>
+                </select>
+            </div>
+        </div>
+        <button class="m-drawer-logout" onclick="logout()">
+            🚪 Sign Out
+        </button>
+    </div>
+
+    <!-- ═══ LOCATION PICKER MODAL ═══ -->
+    <div id="locationModal" class="loc-modal-overlay">
+        <div class="loc-modal">
+            <h3 class="loc-modal-title" data-i18n="loc_title">📍 Select Your Location</h3>
+            <p class="loc-modal-sub" data-i18n="loc_sub">Choose your nearest city for accurate weather, market prices,
+                and AI advice</p>
+            <input type="text" id="locSearch" class="loc-search" placeholder="🔍 Search city..."
+                oninput="filterLocations(this.value)">
+            <div class="loc-grid" id="locGrid">
+                <div class="loc-region">Maharashtra</div>
+                <button class="loc-btn" onclick="selectLocation('Amravati','20.9320','77.7523')">Amravati</button>
+                <button class="loc-btn" onclick="selectLocation('Nagpur','21.1458','79.0882')">Nagpur</button>
+                <button class="loc-btn" onclick="selectLocation('Mumbai','19.0760','72.8777')">Mumbai</button>
+                <button class="loc-btn" onclick="selectLocation('Pune','18.5204','73.8567')">Pune</button>
+                <button class="loc-btn" onclick="selectLocation('Nashik','19.9975','73.7898')">Nashik</button>
+                <button class="loc-btn" onclick="selectLocation('Aurangabad','19.8762','75.3433')">Aurangabad</button>
+                <button class="loc-btn" onclick="selectLocation('Kolhapur','16.7050','74.2433')">Kolhapur</button>
+                <button class="loc-btn" onclick="selectLocation('Solapur','17.6599','75.9064')">Solapur</button>
+                <div class="loc-region">North India</div>
+                <button class="loc-btn" onclick="selectLocation('Delhi','28.6139','77.2090')">Delhi</button>
+                <button class="loc-btn" onclick="selectLocation('Lucknow','26.8467','80.9462')">Lucknow</button>
+                <button class="loc-btn" onclick="selectLocation('Jaipur','26.9124','75.7873')">Jaipur</button>
+                <button class="loc-btn" onclick="selectLocation('Chandigarh','30.7333','76.7794')">Chandigarh</button>
+                <button class="loc-btn" onclick="selectLocation('Varanasi','25.3176','82.9739')">Varanasi</button>
+                <button class="loc-btn" onclick="selectLocation('Bhopal','23.2599','77.4126')">Bhopal</button>
+                <button class="loc-btn" onclick="selectLocation('Indore','22.7196','75.8577')">Indore</button>
+                <button class="loc-btn" onclick="selectLocation('Agra','27.1767','78.0081')">Agra</button>
+                <div class="loc-region">South India</div>
+                <button class="loc-btn" onclick="selectLocation('Bangalore','12.9716','77.5946')">Bangalore</button>
+                <button class="loc-btn" onclick="selectLocation('Chennai','13.0827','80.2707')">Chennai</button>
+                <button class="loc-btn" onclick="selectLocation('Hyderabad','17.3850','78.4867')">Hyderabad</button>
+                <button class="loc-btn" onclick="selectLocation('Kochi','9.9312','76.2673')">Kochi</button>
+                <div class="loc-region">Andhra Pradesh</div>
+                <button class="loc-btn" onclick="selectLocation('Vijayawada','16.5062','80.6480')">Vijayawada</button>
+                <button class="loc-btn"
+                    onclick="selectLocation('Visakhapatnam','17.6868','83.2185')">Visakhapatnam</button>
+                <button class="loc-btn" onclick="selectLocation('Guntur','16.3067','80.4365')">Guntur</button>
+                <button class="loc-btn" onclick="selectLocation('Nellore','14.4426','79.9865')">Nellore</button>
+                <div class="loc-region">East India</div>
+                <button class="loc-btn" onclick="selectLocation('Kolkata','22.5726','88.3639')">Kolkata</button>
+                <button class="loc-btn" onclick="selectLocation('Patna','25.6093','85.1376')">Patna</button>
+                <button class="loc-btn" onclick="selectLocation('Ranchi','23.3441','85.3096')">Ranchi</button>
+                <div class="loc-region">West & Central</div>
+                <button class="loc-btn" onclick="selectLocation('Ahmedabad','23.0225','72.5714')">Ahmedabad</button>
+                <button class="loc-btn" onclick="selectLocation('Rajkot','22.3039','70.8022')">Rajkot</button>
+                <button class="loc-btn" onclick="selectLocation('Raipur','21.2514','81.6296')">Raipur</button>
+                <div class="loc-region">Punjab & Haryana</div>
+                <button class="loc-btn" onclick="selectLocation('Ludhiana','30.9010','75.8573')">Ludhiana</button>
+                <button class="loc-btn" onclick="selectLocation('Karnal','29.6857','76.9905')">Karnal</button>
+                <button class="loc-btn" onclick="selectLocation('Amritsar','31.6340','74.8723')">Amritsar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="/dashboard/app.js"></script>
+    <script>
+        // ── Mobile Navigation Helper ──
+        function mobileNav(page, btn) {
+            // Update bottom nav active state
+            document.querySelectorAll('.m-nav-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            // Use existing navigate function from app.js
+            navigate(page);
+        }
+
+        // ── More Drawer ──
+        function openMobileDrawer() {
+            document.getElementById('mobileDrawer').classList.add('open');
+            document.getElementById('mobileDrawerOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileDrawer() {
+            document.getElementById('mobileDrawer').classList.remove('open');
+            document.getElementById('mobileDrawerOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // Override toggleSidebar for mobile
+        function toggleSidebar() {
+            openMobileDrawer();
+        }
+
+        // Sync language selects
+        const mainLangSelect = document.getElementById('langSelect');
+        const mobileLangSelect = document.getElementById('langSelectMobile');
+        if (mainLangSelect && mobileLangSelect) {
+            mainLangSelect.addEventListener('change', function () {
+                mobileLangSelect.value = this.value;
+            });
+        }
+
+        // When navigating from other code (e.g. app.js), update bottom nav active state
+        const _origNavigate = typeof navigate === 'function' ? navigate : null;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Watch for page changes and update bottom nav
+            const observer = new MutationObserver(() => {
+                const activePage = document.querySelector('.page.active');
+                if (!activePage) return;
+                const pageId = activePage.id.replace('page-', '');
+                const bottomTabs = document.querySelectorAll('.m-nav-tab[data-page]');
+                bottomTabs.forEach(tab => {
+                    tab.classList.toggle('active', tab.dataset.page === pageId);
+                });
+            });
+            const pagesContainer = document.querySelector('.pages');
+            if (pagesContainer) {
+                observer.observe(pagesContainer, { subtree: true, attributes: true, attributeFilter: ['class'] });
+            }
+        });
+    </script>
+</body>
+
+</html>

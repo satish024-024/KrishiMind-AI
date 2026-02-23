@@ -1,5 +1,5 @@
 """
-KrishiMind AI — Smart Agriculture Assistant
+Agri Advisor — Smart Agriculture Assistant
 """
 
 import streamlit as st
@@ -25,7 +25,7 @@ from config import (
 
 # Page configuration
 st.set_page_config(
-    page_title="KrishiMind AI — Smart Agriculture Assistant",
+    page_title="Agri Advisor — Smart Agriculture Assistant",
     page_icon="🌾",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -552,16 +552,7 @@ def render_welcome_screen() -> None:
     languages = [
         {"code": "en", "native": "English",   "english": "English"},
         {"code": "hi", "native": "हिंदी",      "english": "Hindi"},
-        {"code": "bn", "native": "বাংলা",      "english": "Bengali"},
         {"code": "te", "native": "తెలుగు",     "english": "Telugu"},
-        {"code": "ta", "native": "தமிழ்",      "english": "Tamil"},
-        {"code": "mr", "native": "मराठी",      "english": "Marathi"},
-        {"code": "gu", "native": "ગુજરાતી",   "english": "Gujarati"},
-        {"code": "kn", "native": "ಕನ್ನಡ",      "english": "Kannada"},
-        {"code": "ml", "native": "മലയാളം",    "english": "Malayalam"},
-        {"code": "pa", "native": "ਪੰਜਾਬੀ",    "english": "Punjabi"},
-        {"code": "or", "native": "ଓଡ଼ିଆ",      "english": "Odia"},
-        {"code": "as", "native": "অসমীয়া",    "english": "Assamese"},
     ]
 
     # Header
@@ -574,7 +565,7 @@ def render_welcome_screen() -> None:
             <div style="font-size:4.5rem;margin-bottom:1rem;
                         animation:bounceIn 0.8s ease;
                         filter:drop-shadow(0 4px 10px rgba(0,0,0,0.2));">🌾</div>
-            <h1 class="ws-title">Welcome to KrishiMind AI</h1>
+            <h1 class="ws-title">Welcome to Agri Advisor</h1>
             <p class="ws-sub">Empowering Indian Farmers with AI-Powered Agricultural Insights</p>
         </div>
     </div>
@@ -654,9 +645,7 @@ def render_welcome_screen() -> None:
     st.markdown("<div style='height:1.5rem;'></div>", unsafe_allow_html=True)
     
     lang_names = {
-        "en": "English", "hi": "Hindi", "bn": "Bengali", "te": "Telugu",
-        "ta": "Tamil", "mr": "Marathi", "gu": "Gujarati", "kn": "Kannada",
-        "ml": "Malayalam", "pa": "Punjabi", "or": "Odia", "as": "Assamese"
+        "en": "English", "hi": "हिंदी", "te": "తెలుగు",
     }
     current_name = lang_names.get(st.session_state.selected_language, "English")
     
@@ -701,9 +690,7 @@ def render_sidebar():
         st.markdown("### 🌐 Language")
         if st.session_state.selected_language:
             names = {
-                "en": "English", "hi": "हिंदी", "bn": "বাংলা", "te": "తెలుగు",
-                "ta": "தமிழ்", "mr": "मराठी", "gu": "ગુજરાતી", "kn": "ಕನ್ನಡ",
-                "ml": "മലയാളം", "pa": "ਪੰਜਾਬੀ", "or": "ଓଡ଼ିଆ", "as": "অসমীয়া"
+                "en": "English", "hi": "हिंदी", "te": "తెలుగు",
             }
             st.markdown(
                 f'<span class="badge badge-info">{names.get(st.session_state.selected_language, "English")}</span>',
@@ -894,9 +881,7 @@ def main() -> None:
 
     # ── Fixed Header ──────────────────────────────────────
     lang_names = {
-        "en": "English", "hi": "हिंदी", "bn": "বাংলা", "te": "తెలుగు",
-        "ta": "தமிழ்", "mr": "मराठी", "gu": "ગુજરાதી", "kn": "ಕನ್ನಡ",
-        "ml": "മലയாളം", "pa": "ਪੰਜਾਬੀ", "or": "ଓଡ଼ିଆ", "as": "অসমীয়া"
+        "en": "English", "hi": "हिंदी", "te": "తెలుగు",
     }
     curr_lang = lang_names.get(st.session_state.selected_language, "English")
 
@@ -904,7 +889,7 @@ def main() -> None:
     <div class="km-header">
         <div class="km-header-logo">
             <span class="km-header-logo-icon">🌾</span>
-            <span class="km-header-logo-text">KrishiMind AI</span>
+            <span class="km-header-logo-text">Agri Advisor</span>
         </div>
         <div class="km-header-right">
             <div class="km-pill km-pill-lang">🌐 {curr_lang}</div>
@@ -957,7 +942,7 @@ def main() -> None:
     st.markdown("""
     <div style="text-align:center;padding:2.5rem 1rem 1rem;">
         <h2 style="font-size:2rem;font-weight:700;color:#374151;
-                   margin-bottom:0.5rem;">🌾 KrishiMind AI Agent</h2>
+                   margin-bottom:0.5rem;">🌾 Agri Advisor AI Agent</h2>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1025,7 +1010,7 @@ def main() -> None:
     <div class="km-footer">
         <a href="#">Home</a>
         <span style="color:#d1d5db;margin:0 0.5rem;">|</span>
-        <span>© 2025 KrishiMind AI</span>
+        <span>© 2025 Agri Advisor</span>
     </div>
     """, unsafe_allow_html=True)
 

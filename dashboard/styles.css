@@ -1140,6 +1140,120 @@ body {
     transform: translateX(3px);
 }
 
+/* ── Farmer Advisory Cards ── */
+.advisory-card {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+    transition: transform var(--transition);
+}
+
+.advisory-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.advisory-crop-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.advisory-crop-icon {
+    font-size: 1.2rem;
+}
+
+.advisory-crop-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--gray-900);
+}
+
+.advisory-verdict-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.badge-green {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.badge-red {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.badge-amber {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.verdict-green {
+    border-left: 4px solid #22c55e;
+}
+
+.verdict-red {
+    border-left: 4px solid #ef4444;
+}
+
+.verdict-amber {
+    border-left: 4px solid #f59e0b;
+}
+
+.verdict-blue {
+    border-left: 4px solid #3b82f6;
+}
+
+.advisory-reason {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.advisory-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    background: #f8fafc;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+.advisory-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.advisory-stat-label {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.advisory-stat-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
 /* ── ACTIVITY FEED ──────────────────────────────────── */
 .activity-feed {
     display: flex;
@@ -2771,6 +2885,495 @@ body {
 /* Advisory Section */
 .pred-advisory-section {
     margin-top: 1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════
+   PREDICTION TABS — Sell Timing, Crop Tips, Market Info
+   ═══════════════════════════════════════════════════════ */
+.pred-tabs-section {
+    margin-top: 2rem;
+}
+
+.pred-tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--gray-100);
+    padding-bottom: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pred-tab {
+    padding: 0.7rem 1.25rem;
+    border: none;
+    background: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gray-500);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    position: relative;
+    bottom: -2px;
+}
+
+.pred-tab:hover {
+    color: var(--green-600);
+    background: var(--green-50);
+    border-radius: 10px 10px 0 0;
+}
+
+.pred-tab.active {
+    color: var(--green-700);
+    border-bottom-color: var(--green-500);
+    background: linear-gradient(180deg, var(--green-50) 0%, transparent 100%);
+    border-radius: 10px 10px 0 0;
+}
+
+.pred-tab-content {
+    display: none;
+    animation: fadeTabIn 0.3s ease;
+}
+
+.pred-tab-content.active {
+    display: block;
+}
+
+@keyframes fadeTabIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── SELL TIMING STYLES ────────────────────────────────── */
+.sell-timing-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sell-timing-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--gray-100);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition);
+}
+
+.sell-timing-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.sell-timing-card.best::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.sell-timing-card.worst::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.sell-timing-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-500);
+    margin-bottom: 0.5rem;
+}
+
+.sell-timing-price {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--gray-900);
+}
+
+.sell-timing-date {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+}
+
+.sell-timing-recommendation {
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    border: 1px solid var(--green-200);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.sell-timing-recommendation.urgency-high {
+    background: linear-gradient(135deg, #fef2f2, #fff1f2);
+    border-color: #fecaca;
+}
+
+.sell-timing-recommendation.urgency-medium {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border-color: #fde68a;
+}
+
+.sell-rec-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.sell-rec-text {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    line-height: 1.5;
+}
+
+.sell-rec-sub {
+    font-size: 0.78rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+    font-weight: 400;
+}
+
+/* Weekly analysis bar chart */
+.weekly-bars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.weekly-bar-item {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--gray-100);
+    padding: 1rem;
+    text-align: center;
+    transition: all var(--transition);
+    position: relative;
+}
+
+.weekly-bar-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.weekly-bar-item.best-week {
+    border-color: var(--green-200);
+    background: var(--green-50);
+}
+
+.weekly-bar-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+.weekly-bar-price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--gray-900);
+}
+
+.weekly-bar-change {
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.weekly-bar-dates {
+    font-size: 0.6rem;
+    color: var(--gray-400);
+    margin-top: 0.25rem;
+}
+
+/* ── CROP ALTERNATIVES STYLES ──────────────────────────── */
+.crop-alt-insight {
+    background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+    border: 1px solid #bfdbfe;
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.crop-alt-insight-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.crop-alt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.crop-alt-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--gray-100);
+    padding: 1.25rem;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.crop-alt-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+}
+
+.crop-alt-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.crop-alt-card.rising::before {
+    background: linear-gradient(90deg, #22c55e, #10b981);
+}
+
+.crop-alt-card.falling::before {
+    background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.crop-alt-card.stable::before {
+    background: linear-gradient(90deg, #f59e0b, #eab308);
+}
+
+.crop-alt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.crop-alt-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.crop-alt-name span:first-child {
+    font-size: 1.5rem;
+}
+
+.crop-alt-name strong {
+    font-size: 1rem;
+    color: var(--gray-800);
+}
+
+.crop-alt-score {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.crop-alt-stats {
+    display: flex;
+    gap: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--gray-100);
+}
+
+.crop-alt-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.crop-alt-stat-label {
+    font-size: 0.62rem;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.crop-alt-stat-val {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.crop-alt-season-badge {
+    font-size: 0.62rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+/* ── STATE COMPARISON STYLES ───────────────────────────── */
+.state-compare-insight {
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+    border: 1px solid var(--green-200);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.state-compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--gray-100);
+    background: white;
+}
+
+.state-compare-table thead {
+    background: linear-gradient(135deg, var(--green-50), var(--blue-50));
+}
+
+.state-compare-table th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.state-compare-table td {
+    padding: 0.8rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--gray-50);
+    color: var(--gray-700);
+}
+
+.state-compare-table tr:last-child td {
+    border-bottom: none;
+}
+
+.state-compare-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.state-compare-table tbody tr:hover {
+    background: var(--green-50);
+}
+
+.state-compare-table tbody tr.best-row {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), rgba(16, 163, 74, 0.04));
+}
+
+.state-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 800;
+    margin-right: 0.5rem;
+}
+
+.state-rank-badge.rank-1 {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+}
+
+.state-rank-badge.rank-2 {
+    background: var(--gray-300);
+    color: white;
+}
+
+.state-rank-badge.rank-3 {
+    background: #cd7f32;
+    color: white;
+}
+
+.state-rank-badge.rank-other {
+    background: var(--gray-100);
+    color: var(--gray-500);
+}
+
+.state-trend-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.state-national-badge {
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+/* Responsive for new tabs */
+@media (max-width: 768px) {
+    .sell-timing-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .weekly-bars {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .crop-alt-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pred-tabs-nav {
+        gap: 0.25rem;
+    }
+
+    .pred-tab {
+        padding: 0.6rem 0.9rem;
+        font-size: 0.75rem;
+    }
+
+    .state-compare-table {
+        font-size: 0.78rem;
+    }
+
+    .state-compare-table th,
+    .state-compare-table td {
+        padding: 0.6rem 0.5rem;
+    }
 }
 
 .pred-advisory-grid {

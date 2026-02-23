@@ -1,5 +1,5 @@
 """
-KrishiMind AI — REST API Server
+Agri Advisor — REST API Server
 Wraps existing FAISS + Gemini services for the new dashboard
 """
 
@@ -111,6 +111,26 @@ def api_me():
     return jsonify({'authenticated': False}), 401
 
 
+# ── Dynamic Serving — Mobile Detection ────────────────────
+import re as _re
+
+_MOBILE_RE = _re.compile(
+    r'Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS',
+    _re.IGNORECASE
+)
+
+def _is_mobile():
+    """Check if the current request is from a mobile device."""
+    ua = request.headers.get('User-Agent', '')
+    return bool(_MOBILE_RE.search(ua))
+
+
+def _add_vary(response):
+    """Add Vary: User-Agent header so CDNs cache per device type."""
+    response.headers['Vary'] = 'User-Agent'
+    return response
+
+
 # ── Serve Dashboard (Protected) ──────────────────────────
 
 @app.route('/dashboard/')
@@ -119,18 +139,23 @@ def api_me():
 def serve_dashboard():
     if 'user_id' not in session:
         return redirect('/login')
-    return send_from_directory(str(DASHBOARD_DIR), 'index.html')
+    # Dynamic serving: mobile gets mobile.html, desktop gets index.html
+    html_file = 'mobile.html' if _is_mobile() else 'index.html'
+    resp = send_from_directory(str(DASHBOARD_DIR), html_file)
+    return _add_vary(resp)
 
 @app.route('/dashboard/<path:filename>')
 def serve_dashboard_files(filename):
     # Allow public access to css/js/images even if not logged in (needed for login page styles)
-    if filename in ['login.html', 'styles.css', 'app.js']:
-        return send_from_directory(str(DASHBOARD_DIR), filename)
+    if filename in ['login.html', 'styles.css', 'mobile.css', 'app.js']:
+        resp = send_from_directory(str(DASHBOARD_DIR), filename)
+        return _add_vary(resp)
     
     if 'user_id' not in session and not filename.endswith(('.css', '.js', '.png', '.jpg', '.svg', '.ico')):
         return redirect('/login')
         
-    return send_from_directory(str(DASHBOARD_DIR), filename)
+    resp = send_from_directory(str(DASHBOARD_DIR), filename)
+    return _add_vary(resp)
 
 
 # ── API Routes ───────────────────────────────────────────
@@ -1071,8 +1096,10 @@ def stats():
     })
 
 # ── CROP PRICE PREDICTION & ADVISORY ────────────────────
-from services.price_predictor import predict_prices, generate_advisory, get_available_crops
-
+from services.price_predictor import (
+    predict_prices, generate_advisory, get_available_crops,
+    sell_timing_optimizer, get_crop_alternatives, compare_state_prices
+)
 
 @app.route('/api/price-prediction', methods=['GET'])
 def price_prediction():
@@ -1154,6 +1181,65 @@ def price_advisory():
         })
     except Exception as e:
         print(f'[PriceAdvisory] Error: {e}')
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/sell-timing', methods=['GET'])
+def api_sell_timing():
+    """Optimal sell timing analysis for a crop.
+       Query: ?crop=Wheat&state=Maharashtra (optional)
+    """
+    crop = request.args.get('crop', 'Wheat')
+    state = request.args.get('state', '').strip() or None
+
+    try:
+        result = sell_timing_optimizer(crop, state=state)
+        if not result:
+            return jsonify({'error': 'Sell timing analysis failed'}), 500
+        result['timestamp'] = datetime.now().isoformat()
+        return jsonify(result)
+    except Exception as e:
+        print(f'[SellTiming] Error: {e}')
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/crop-alternatives', methods=['GET'])
+def api_crop_alternatives():
+    """Get alternative crop recommendations.
+       Query: ?crop=Wheat&state=Maharashtra (optional)
+    """
+    crop = request.args.get('crop', 'Wheat')
+    state = request.args.get('state', '').strip() or None
+
+    try:
+        result = get_crop_alternatives(crop, state=state)
+        if not result:
+            return jsonify({'error': 'Alternative analysis failed'}), 500
+        result['timestamp'] = datetime.now().isoformat()
+        return jsonify(result)
+    except Exception as e:
+        print(f'[CropAlternatives] Error: {e}')
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/state-comparison', methods=['GET'])
+def api_state_comparison():
+    """Compare crop prices across states.
+       Query: ?crop=Wheat
+    """
+    crop = request.args.get('crop', 'Wheat')
+
+    try:
+        result = compare_state_prices(crop)
+        if not result:
+            return jsonify({'error': 'No state-wise data available for this crop', 'crop': crop}), 404
+        result['timestamp'] = datetime.now().isoformat()
+        return jsonify(result)
+    except Exception as e:
+        print(f'[StateComparison] Error: {e}')
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 

@@ -350,3 +350,252 @@ def get_available_crops():
     """Return list of crops available for prediction."""
     data = _load_history()
     return list(data.get('crops', {}).keys())
+
+
+def sell_timing_optimizer(crop_name, state=None):
+    """
+    Analyze 30-day forecast to find the optimal sell window.
+    Returns day-by-day analysis with best sell day, worst sell day,
+    and a recommendation string.
+    """
+    pred = predict_prices(crop_name, forecast_days=30, state=state)
+    if not pred or not pred.get('prediction'):
+        return None
+
+    forecast = pred['prediction']
+    current = pred['current_price']
+    msp = pred['msp']
+
+    # Find best and worst days
+    prices_with_idx = [(i, f['date'], f['price']) for i, f in enumerate(forecast)]
+    best = max(prices_with_idx, key=lambda x: x[2])
+    worst = min(prices_with_idx, key=lambda x: x[2])
+
+    # Calculate weekly averages
+    weekly = []
+    for week_start in range(0, min(28, len(forecast)), 7):
+        week_data = forecast[week_start:week_start + 7]
+        avg_price = round(sum(f['price'] for f in week_data) / len(week_data))
+        week_label = f"Week {week_start // 7 + 1}"
+        start_date = week_data[0]['date']
+        end_date = week_data[-1]['date']
+        weekly.append({
+            'label': week_label,
+            'avg_price': avg_price,
+            'start_date': start_date,
+            'end_date': end_date,
+            'change_vs_current': round((avg_price - current) / max(current, 1) * 100, 1)
+        })
+
+    # Best week to sell
+    best_week = max(weekly, key=lambda w: w['avg_price'])
+
+    # Build recommendation
+    best_gain = round((best[2] - current) / max(current, 1) * 100, 1)
+    if best_gain > 5:
+        recommendation = f"Wait until around {best[1]} when prices may peak at ₹{best[2]:,}/qt ({best_gain:+.1f}% gain)"
+        urgency = 'low'
+    elif best_gain > 0:
+        recommendation = f"Slight uptrend expected. Best window around {best[1]} (₹{best[2]:,}/qt)"
+        urgency = 'medium'
+    else:
+        if msp and current > msp * 1.05:
+            recommendation = f"Prices may decline. Sell now while price (₹{current:,}) is above MSP (₹{msp:,})"
+            urgency = 'high'
+        else:
+            recommendation = f"Prices expected to decline. Consider selling soon or at MSP (₹{msp:,}/qt)"
+            urgency = 'high'
+
+    # MSP safety net info
+    msp_info = None
+    if msp:
+        msp_ratio = current / msp
+        if msp_ratio < 1.0:
+            msp_info = f"Current price is BELOW MSP. Use government procurement at ₹{msp:,}/qt for guaranteed income."
+        elif msp_ratio < 1.1:
+            msp_info = f"Current price is near MSP (only {round((msp_ratio - 1) * 100)}% above). Government procurement is a safe option."
+        else:
+            msp_info = f"Current price is {round((msp_ratio - 1) * 100)}% above MSP — good market opportunity."
+
+    return {
+        'crop': crop_name,
+        'icon': _get_icon(crop_name),
+        'current_price': current,
+        'msp': msp,
+        'best_sell_day': {'date': best[1], 'price': best[2], 'gain_pct': best_gain},
+        'worst_sell_day': {'date': worst[1], 'price': worst[2]},
+        'weekly_analysis': weekly,
+        'best_week': best_week,
+        'recommendation': recommendation,
+        'urgency': urgency,
+        'msp_info': msp_info,
+        'trend': pred['trend'],
+        'source': pred.get('source', 'AI Model')
+    }
+
+
+def get_crop_alternatives(crop_name, state=None):
+    """
+    When a crop has falling/low prices, recommend alternative crops
+    that have better price trends in the same season.
+    """
+    data = _load_history()
+    crops = data.get('crops', {})
+
+    if crop_name not in crops:
+        return None
+
+    # Get prediction for the target crop
+    target_pred = predict_prices(crop_name, forecast_days=30, state=state)
+    if not target_pred:
+        return None
+
+    target_change = round((target_pred['predicted_price'] - target_pred['current_price']) /
+                          max(target_pred['current_price'], 1) * 100, 1)
+    target_season = crops[crop_name].get('seasonal_pattern', 'kharif')
+
+    # Compare against all other crops
+    alternatives = []
+    for name in crops:
+        if name == crop_name:
+            continue
+
+        alt_pred = predict_prices(name, forecast_days=30, state=state)
+        if not alt_pred:
+            continue
+
+        alt_change = round((alt_pred['predicted_price'] - alt_pred['current_price']) /
+                           max(alt_pred['current_price'], 1) * 100, 1)
+        alt_season = crops[name].get('seasonal_pattern', 'kharif')
+
+        # Profitability score: higher is better
+        msp_bonus = 0
+        if alt_pred['msp'] and alt_pred['current_price'] > alt_pred['msp'] * 1.1:
+            msp_bonus = 10  # Above MSP bonus
+
+        score = alt_change + msp_bonus
+        season_match = (target_season == alt_season) or alt_season == 'volatile'
+
+        alternatives.append({
+            'crop': name,
+            'icon': _get_icon(name),
+            'current_price': alt_pred['current_price'],
+            'predicted_price': alt_pred['predicted_price'],
+            'change_pct': alt_change,
+            'trend': alt_pred['trend'],
+            'msp': alt_pred['msp'],
+            'season': alt_season,
+            'season_match': season_match,
+            'score': round(score, 1),
+            'source': alt_pred.get('source', 'AI Model')
+        })
+
+    # Sort by score (best alternatives first)
+    alternatives.sort(key=lambda x: x['score'], reverse=True)
+
+    # Generate insights
+    better_options = [a for a in alternatives if a['change_pct'] > target_change]
+    rising_crops = [a for a in alternatives if a['trend'] == 'rising']
+
+    insight = ''
+    if target_change < -5:
+        if better_options:
+            top = better_options[0]
+            insight = f"{crop_name} prices are expected to fall {abs(target_change)}%. Consider {top['crop']} ({top['icon']}) which shows {top['change_pct']:+.1f}% trend."
+        else:
+            insight = f"All crops show similar trends. Focus on crops with MSP support for income security."
+    elif target_change < 2:
+        insight = f"{crop_name} prices are relatively stable. Below are alternatives ranked by forecast performance."
+    else:
+        insight = f"{crop_name} shows positive trend ({target_change:+.1f}%). Alternatives listed for diversification planning."
+
+    return {
+        'target_crop': crop_name,
+        'target_icon': _get_icon(crop_name),
+        'target_change': target_change,
+        'target_trend': target_pred['trend'],
+        'target_season': target_season,
+        'alternatives': alternatives[:6],  # Top 6
+        'better_count': len(better_options),
+        'rising_count': len(rising_crops),
+        'insight': insight,
+        'source': target_pred.get('source', 'AI Model')
+    }
+
+
+def compare_state_prices(crop_name):
+    """
+    Compare the same crop's price across all available states.
+    Helps farmers find the best market to sell.
+    """
+    data = _load_original_history()
+    if not data or crop_name not in data.get('crops', {}):
+        return None
+
+    crop_data = data['crops'][crop_name]
+    states_data = crop_data.get('states', {})
+
+    if not states_data:
+        return None
+
+    comparisons = []
+    # Get national average
+    national_history = crop_data.get('history', [])
+    national_avg = round(sum(h['price'] for h in national_history) / max(len(national_history), 1)) if national_history else 0
+
+    for state_name, history in states_data.items():
+        if not history:
+            continue
+
+        prices = [h['price'] for h in history]
+        current = prices[-1]
+        avg = round(sum(prices) / len(prices))
+        high = max(prices)
+        low = min(prices)
+
+        # Trend (simple: compare last vs first)
+        if len(prices) >= 3:
+            recent_avg = sum(prices[-3:]) / 3
+            early_avg = sum(prices[:3]) / 3
+            trend_pct = round((recent_avg - early_avg) / max(early_avg, 1) * 100, 1)
+        else:
+            trend_pct = 0
+
+        comparisons.append({
+            'state': state_name,
+            'current_price': current,
+            'avg_price': avg,
+            'high_price': high,
+            'low_price': low,
+            'data_points': len(prices),
+            'trend_pct': trend_pct,
+            'vs_national': round(current - national_avg) if national_avg else 0,
+            'last_date': history[-1]['date']
+        })
+
+    # Sort by current price (highest first — best market)
+    comparisons.sort(key=lambda x: x['current_price'], reverse=True)
+
+    best = comparisons[0] if comparisons else None
+    worst = comparisons[-1] if comparisons else None
+
+    msp = crop_data.get('msp')
+    insight = ''
+    if best and worst:
+        diff = best['current_price'] - worst['current_price']
+        insight = f"{best['state']} offers ₹{diff:,}/qt more than {worst['state']} for {crop_name}. "
+        if msp and best['current_price'] > msp:
+            insight += f"Price in {best['state']} is {round((best['current_price'] / msp - 1) * 100)}% above MSP."
+
+    return {
+        'crop': crop_name,
+        'icon': _get_icon(crop_name),
+        'msp': msp,
+        'national_avg': national_avg,
+        'comparisons': comparisons,
+        'best_market': best,
+        'worst_market': worst,
+        'insight': insight,
+        'source': data.get('source', 'data.gov.in'),
+        'last_updated': data.get('last_updated')
+    }
